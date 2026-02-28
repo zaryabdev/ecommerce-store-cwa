@@ -13,7 +13,7 @@ const Currency: React.FC<CurrencyProps> = ({
     value = 0,
     currency = "PKR",
     locale = "en-PK",
-    noDecimals = false,
+    noDecimals = true,
 }) => {
     const [isMounted, setIsMounted] = useState(false);
 
