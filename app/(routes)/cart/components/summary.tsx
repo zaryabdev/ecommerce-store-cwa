@@ -2,13 +2,15 @@
 
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import Button from "@/components/ui/button";
 import Currency from "@/components/ui/currency";
+import Modal from "@/components/ui/modal";
 import useCart from "@/hooks/use-cart";
-import { OrderResponse } from "@/types";
+import { CreateOrderPayload, OrderResponse } from "@/types";
+import CODDetailsForm from "./cod-details-form";
 import OrderSuccessCard from "./order-success-card";
 
 const Summary = () => {
@@ -18,6 +20,7 @@ const Summary = () => {
 
     const [loadingCOD, setLoadingCOD] = useState(false);
     const [codOrder, setCodOrder] = useState<OrderResponse | null>(null);
+    const [isCODModalOpen, setIsCODModalOpen] = useState(false);
 
     useEffect(() => {
         if (searchParams.get("success")) {
@@ -29,6 +32,8 @@ const Summary = () => {
         }
     }, [searchParams, removeAll]);
 
+    const productIds = useMemo(() => items.map((i) => i.id), [items]);
+
     const totalPrice = useMemo(
         () => items.reduce((total, item) => total + Number(item.price), 0),
         [items],
@@ -38,41 +43,42 @@ const Summary = () => {
         const response = await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL}/checkout`,
             {
-                productIds: items.map((item) => item.id),
+                productIds,
             },
         );
 
         window.location.href = response.data.url;
     };
 
-    const onCOD = async () => {
-        if (items.length === 0) return;
+    const submitCOD = useCallback(
+        async (payload: CreateOrderPayload) => {
+            if (productIds.length === 0) return;
 
-        try {
-            setLoadingCOD(true);
+            try {
+                setLoadingCOD(true);
 
-            const res = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/cod`,
-                {
-                    productIds: items.map((item) => item.id),
-                },
-            );
+                const res = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/cod`,
+                    payload,
+                );
 
-            setCodOrder(res.data as OrderResponse);
-            toast.success("Order placed! Pay on delivery.");
-            removeAll();
-        } catch (error: any) {
-            const msg =
-                typeof error?.response?.data === "string"
-                    ? error.response.data
-                    : "Failed to place COD order.";
-            toast.error(msg);
-        } finally {
-            setLoadingCOD(false);
-        }
-    };
+                setCodOrder(res.data as OrderResponse);
+                toast.success("Order placed! Pay on delivery.");
+                removeAll();
+                setIsCODModalOpen(false);
+            } catch (error: any) {
+                const msg =
+                    typeof error?.response?.data === "string"
+                        ? error.response.data
+                        : "Failed to place COD order.";
+                toast.error(msg);
+            } finally {
+                setLoadingCOD(false);
+            }
+        },
+        [productIds.length, removeAll],
+    );
 
-    // If COD order exists, show success UI instead of checkout buttons
     if (codOrder) {
         return (
             <div className="px-4 py-6 mt-16 sm:p-6 lg:col-span-5 lg:mt-0 lg:p-8">
@@ -102,16 +108,29 @@ const Summary = () => {
                 disabled={items.length === 0}
                 className="w-full mt-6"
             >
-                Checkout
+                Proceed to Payment
             </Button>
 
             <Button
-                onClick={onCOD}
-                disabled={items.length === 0 || loadingCOD}
+                onClick={() => setIsCODModalOpen(true)}
+                disabled={items.length === 0}
                 className="w-full mt-4 bg-green-600 hover:bg-green-700"
             >
-                {loadingCOD ? "Placing Order..." : "Cash on Delivery"}
+                Cash on Delivery
             </Button>
+
+            <Modal
+                open={isCODModalOpen}
+                title="Cash on Delivery details"
+                onClose={() => setIsCODModalOpen(false)}
+            >
+                <CODDetailsForm
+                    productIds={productIds}
+                    submitting={loadingCOD}
+                    onCancel={() => setIsCODModalOpen(false)}
+                    onSubmit={submitCOD}
+                />
+            </Modal>
         </div>
     );
 };

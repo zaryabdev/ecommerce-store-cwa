@@ -53,3 +53,22 @@ export type OrderResponse = {
         color?: { id: string; name: string; value: string };
     }>;
 };
+
+export type CreateOrderPayload = {
+    productIds: string[];
+    paymentMethod: "COD" | "STRIPE";
+    customer?: {
+        name?: string;
+        phone?: string;
+        email?: string;
+    };
+    shipping?: {
+        line1: string;
+        line2?: string;
+        city: string;
+        postalCode?: string;
+        country?: string; // "PK"
+        notes?: string;
+    };
+    notes?: string;
+};
