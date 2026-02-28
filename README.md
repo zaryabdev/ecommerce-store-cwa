@@ -2,7 +2,6 @@
 
 ![Copy of Copy of Fullstack Twitter Clone (1)](https://github.com/AntonioErdeljac/next13-ecommerce-admin/assets/23248726/088760cb-837d-44b7-a959-63089385d0a0)
 
-
 For DEMO, use [Stripe Testing Cards](https://stripe.com/docs/testing)
 
 This is a repository for a Full Stack E-Commerce + Dashboard & CMS: Next.js 13 App Router, React, Tailwind, Prisma, MySQL
@@ -49,11 +48,13 @@ npm i
 
 ### Setup .env file
 
-
 ```js
 NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_WHATSAPP_NUMBER=
 ```
 
+Phone must be international format with country code, no +, no spaces
+e.g. Netherlands +31 6 1234 5678 → 31612345678
 
 ### Start the app
 
@@ -65,6 +66,6 @@ npm run dev
 
 Running commands with npm `npm run [command]`
 
-| command         | description                              |
-| :-------------- | :--------------------------------------- |
-| `dev`           | Starts a development instance of the app |
+| command | description                              |
+| :------ | :--------------------------------------- |
+| `dev`   | Starts a development instance of the app |

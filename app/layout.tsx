@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import ModalProvider from "@/providers/modal-provider";
 import ToastProvider from "@/providers/toast-provider";
 
+import WhatsAppFloat from "@/components/ui/whatspp-float";
 import "./globals.css";
 
 const font = Urbanist({ subsets: ["latin"] });
@@ -27,6 +28,7 @@ export default function RootLayout({
                 <Navbar />
                 <main className="flex-1">{children}</main>
                 <Footer />
+                <WhatsAppFloat message="Hi! I want to place an order." />
             </body>
         </html>
     );
