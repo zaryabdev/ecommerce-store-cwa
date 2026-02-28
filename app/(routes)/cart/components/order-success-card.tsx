@@ -90,7 +90,7 @@ export default function OrderSuccessCard({
                     <div className="p-3 rounded-xl bg-gray-50">
                         <div className="text-xs text-gray-500">Total</div>
                         <div className="mt-1 text-sm font-semibold text-gray-900">
-                            {formatMoney(total)}
+                            {formatMoney(total, { noDecimals: true })}
                         </div>
                     </div>
                 </div>
@@ -147,7 +147,9 @@ export default function OrderSuccessCard({
                                 </div>
 
                                 <div className="text-sm font-semibold text-gray-900 shrink-0">
-                                    {formatMoney(Number(p.price ?? 0))}
+                                    {formatMoney(Number(p.price ?? 0), {
+                                        noDecimals: true,
+                                    })}
                                 </div>
                             </li>
                         );
