@@ -52,6 +52,21 @@ export type OrderResponse = {
         size?: { id: string; name: string; value: string };
         color?: { id: string; name: string; value: string };
     }>;
+
+    // ✅ new (optional so nothing breaks)
+    customerName?: string;
+    email?: string;
+    phone?: string;
+
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    postalCode?: string;
+    country?: string;
+    customerNotes?: string;
+
+    // if you still return it
+    address?: string;
 };
 
 export type CreateOrderPayload = {
