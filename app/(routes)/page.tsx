@@ -8,8 +8,9 @@ export const revalidate = 0;
 
 const HomePage = async () => {
     const products = await getProducts({ isFeatured: true });
+
     const billboard = await getBillboard(
-        "a81e99a6-c8ee-4c21-9be7-5ea52ac78613",
+        ` ${process.env.NEXT_PUBLIC_STORE_ID}`,
     );
 
     console.log({ billboard: billboard });
