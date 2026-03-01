@@ -87,3 +87,9 @@ export type CreateOrderPayload = {
     };
     notes?: string;
 };
+
+export type Store = {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+};
