@@ -56,7 +56,7 @@ const Summary = () => {
 
             try {
                 setLoadingCOD(true);
-
+                debugger;
                 const res = await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/cod`,
                     payload,
