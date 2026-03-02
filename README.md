@@ -51,6 +51,9 @@ npm i
 ```js
 NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_WHATSAPP_NUMBER=
+NEXT_PUBLIC_STORE_ID=
+NEXT_PUBLIC_WHATSAPP_NUMBER=
+
 ```
 
 Phone must be international format with country code, no +, no spaces
