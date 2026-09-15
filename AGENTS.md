@@ -76,22 +76,13 @@ The Storefront consumes Admin routes for:
 - products / product detail
 - sizes
 - colors
-- Stripe checkout
-- COD creation
+- COD creation (the sole checkout flow)
 
 If a feature requires a field the current API does not provide, do not fabricate it client-side. Identify the required Admin change.
 
 ## Checkout Flows
 
-### Stripe
-
-- send `{ productIds }` to `/checkout`
-- receive Stripe-hosted URL
-- full-browser redirect
-- Stripe returns to `/cart?success=1` or `?canceled=1`
-- success currently shows a toast and clears cart
-
-### COD
+### Checkout / COD
 
 - collect customer/shipping information
 - POST to `/cod`
@@ -114,8 +105,6 @@ Do not silently fix these during unrelated work:
 - split API base environment variables
 - most read helpers do not check `res.ok`
 - no route `error.tsx` boundaries
-- Stripe checkout lacks robust error handling
-- Stripe success has no order confirmation UI
 - no quantities
 - no runtime validation of Admin API responses
 - generic metadata only

@@ -12,8 +12,7 @@ The separate Admin repository owns:
 - Clerk admin auth
 - catalog mutations
 - order creation
-- Stripe Checkout/session creation
-- Stripe webhook processing
+    - Cash-on-delivery order creation
 
 ## Working Rules
 
@@ -47,9 +46,7 @@ Do not assume a variant or quantity model exists.
 
 ## Checkout
 
-Stripe: `/checkout` -> redirect to Stripe -> return `/cart?success=1|canceled=1`.
-
-COD: customer/shipping form -> `/cod` -> returned order summary -> `OrderSuccessCard`.
+Checkout: customer/shipping form -> `/cod` -> returned order summary -> `OrderSuccessCard`.
 
 Checkout sends product IDs; authoritative prices must remain server-side in Admin.
 
@@ -64,8 +61,6 @@ Do not silently repair during unrelated tasks:
 - split API URL env vars
 - missing `res.ok` checks in most fetch helpers
 - no `error.tsx` boundaries
-- weak Stripe POST error handling
-- no Stripe order confirmation UI
 - no cart quantities
 - generic SEO metadata
 - stale/dead tutorial code and assets

@@ -253,7 +253,7 @@ export default function CODDetailsForm({
                     disabled={!isValid || submitting}
                     className="w-full bg-green-600 sm:w-auto hover:bg-green-700"
                 >
-                    {submitting ? "Placing Order..." : "Place COD Order"}
+                    {submitting ? "Placing Order..." : "Place Order"}
                 </Button>
             </div>
         </form>

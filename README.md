@@ -2,8 +2,6 @@
 
 ![Copy of Copy of Fullstack Twitter Clone (1)](https://github.com/AntonioErdeljac/next13-ecommerce-admin/assets/23248726/088760cb-837d-44b7-a959-63089385d0a0)
 
-For DEMO, use [Stripe Testing Cards](https://stripe.com/docs/testing)
-
 This is a repository for a Full Stack E-Commerce + Dashboard & CMS: Next.js 13 App Router, React, Tailwind, Prisma, MySQL
 
 ## MAKE SURE YOU HAVE [ADMIN](https://github.com/AntonioErdeljac/next13-ecommerce-admin/tree/master) SETUP FIRST!
@@ -26,8 +24,7 @@ Key Features:
 - You will be able to see graphs of your revenue etc.
 - You will learn Clerk Authentication!
 - Order creation
-- Stripe checkout
-- Stripe webhooks
+- Cash-on-delivery ordering
 - MySQL + Prisma + PlanetScale
 
 ### Prerequisites
@@ -50,9 +47,9 @@ npm i
 
 ```js
 NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_API_BASE_URL=
 NEXT_PUBLIC_WHATSAPP_NUMBER=
 NEXT_PUBLIC_STORE_ID=
-NEXT_PUBLIC_WHATSAPP_NUMBER=
 
 ```
 

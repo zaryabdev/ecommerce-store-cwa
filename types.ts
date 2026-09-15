@@ -71,7 +71,7 @@ export type OrderResponse = {
 
 export type CreateOrderPayload = {
     productIds: string[];
-    paymentMethod: "COD" | "STRIPE";
+    paymentMethod: "COD";
     customer?: {
         name?: string;
         phone?: string;
