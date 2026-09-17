@@ -6,18 +6,23 @@ import { Dialog } from "@headlessui/react";
 
 import IconButton  from "@/components/ui/icon-button";
 import Button from "@/components/ui/button";
-import { Color, Size } from "@/types";
+import { Category, Color, Size } from "@/types";
 
+import CategoryNav from "./category-nav";
 import Filter from "./filter";
 
 interface MobileFiltersProps {
   sizes: Size[],
   colors: Color[],
+  family?: { parent: Category, children: Category[] } | null,
+  activeCategoryId: string,
 }
 
 const MobileFilters: React.FC<MobileFiltersProps> = ({
   sizes,
-  colors
+  colors,
+  family,
+  activeCategoryId,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -49,6 +54,14 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
             </div>
 
             <div className="p-4">
+              {family && (
+                <CategoryNav
+                  parent={family.parent}
+                  items={family.children}
+                  activeId={activeCategoryId}
+                  onNavigate={onClose}
+                />
+              )}
               <Filter
                 valueKey="sizeId" 
                 name="Sizes" 

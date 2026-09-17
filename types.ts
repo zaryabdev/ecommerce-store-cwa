@@ -23,7 +23,10 @@ export interface Billboard {
 export interface Category {
     id: string;
     name: string;
-    billboard: Billboard;
+    parentId: string | null;
+    billboardId: string | null;
+    // Only included by the single-category endpoint, not the category list.
+    billboard?: Billboard | null;
 }
 
 export interface Size {

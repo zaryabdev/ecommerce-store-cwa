@@ -15,7 +15,8 @@ const MainNav: React.FC<MainNavProps> = ({
 }) => {
   const pathname = usePathname();
 
-  const routes = data.map((route) => ({
+  // Child categories are reached from their parent's category page.
+  const routes = data.filter((route) => !route.parentId).map((route) => ({
     href: `/category/${route.id}`,
     label: route.name,
     active: pathname === `/category/${route.id}`,
