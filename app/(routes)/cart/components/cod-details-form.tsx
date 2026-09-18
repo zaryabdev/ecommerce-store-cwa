@@ -16,12 +16,12 @@ type FormValues = {
 };
 
 export default function CODDetailsForm({
-    productIds,
+    items,
     onSubmit,
     submitting,
     onCancel,
 }: {
-    productIds: string[];
+    items: Array<{ productId: string; quantity: number }>;
     submitting: boolean;
     onCancel: () => void;
     onSubmit: (payload: CreateOrderPayload) => Promise<void>;
@@ -80,7 +80,7 @@ export default function CODDetailsForm({
         }
 
         const payload: CreateOrderPayload = {
-            productIds,
+            items,
             paymentMethod: "COD",
             customer: {
                 name: vals.name.trim(),

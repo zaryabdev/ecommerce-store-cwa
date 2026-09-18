@@ -1,6 +1,5 @@
 import Image from "next/image";
-import { toast } from "react-hot-toast";
-import { X } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 
 import IconButton from "@/components/ui/icon-button";
 import Currency from "@/components/ui/currency";
@@ -10,10 +9,12 @@ import { Product } from "@/types";
 
 interface CartItemProps {
   data: Product;
+  quantity: number;
 }
 
 const CartItem: React.FC<CartItemProps> = ({
-  data
+  data,
+  quantity,
 }) => {
   const cart = useCart();
 
@@ -21,7 +22,7 @@ const CartItem: React.FC<CartItemProps> = ({
     cart.removeItem(data.id);
   };
 
-  return ( 
+  return (
     <li className="flex py-6 border-b">
       <div className="relative h-24 w-24 rounded-md overflow-hidden sm:h-48 sm:w-48">
         <Image
@@ -46,11 +47,32 @@ const CartItem: React.FC<CartItemProps> = ({
             <p className="text-gray-500">{data.color.name}</p>
             <p className="ml-4 border-l border-gray-200 pl-4 text-gray-500">{data.size.name}</p>
           </div>
-          <Currency value={data.price} />
+          <div className="mt-2 flex items-center gap-x-3">
+            <div className="flex items-center gap-x-3 rounded-md border px-2 py-0.5">
+              <button
+                type="button"
+                aria-label="Decrease quantity"
+                onClick={() => cart.decrementItem(data.id)}
+                className="text-gray-500 hover:text-black"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="w-5 text-center text-sm">{quantity}</span>
+              <button
+                type="button"
+                aria-label="Increase quantity"
+                onClick={() => cart.incrementItem(data.id)}
+                className="text-gray-500 hover:text-black"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+            <Currency value={Number(data.price) * quantity} />
+          </div>
         </div>
       </div>
     </li>
   );
 }
- 
+
 export default CartItem;

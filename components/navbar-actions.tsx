@@ -29,7 +29,7 @@ const NavbarActions = () => {
           color="white"
         />
         <span className="ml-2 text-sm font-medium text-white">
-          {cart.items.length}
+          {cart.items.reduce((total, item) => total + item.quantity, 0)}
         </span>
       </Button>
     </div>

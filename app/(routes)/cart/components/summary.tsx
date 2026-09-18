@@ -20,16 +20,19 @@ const Summary = () => {
     const [codOrder, setCodOrder] = useState<OrderResponse | null>(null);
     const [isCODModalOpen, setIsCODModalOpen] = useState(false);
 
-    const productIds = useMemo(() => items.map((i) => i.id), [items]);
+    const orderItems = useMemo(
+        () => items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
+        [items],
+    );
 
     const totalPrice = useMemo(
-        () => items.reduce((total, item) => total + Number(item.price), 0),
+        () => items.reduce((total, item) => total + Number(item.product.price) * item.quantity, 0),
         [items],
     );
 
     const submitCOD = useCallback(
         async (payload: CreateOrderPayload) => {
-            if (productIds.length === 0) return;
+            if (orderItems.length === 0) return;
 
             try {
                 setLoadingCOD(true);
@@ -52,7 +55,7 @@ const Summary = () => {
                 setLoadingCOD(false);
             }
         },
-        [productIds.length, removeAll],
+        [orderItems.length, removeAll],
     );
 
     if (codOrder) {
@@ -93,7 +96,7 @@ const Summary = () => {
                 onClose={() => setIsCODModalOpen(false)}
             >
                 <CODDetailsForm
-                    productIds={productIds}
+                    items={orderItems}
                     submitting={loadingCOD}
                     onCancel={() => setIsCODModalOpen(false)}
                     onSubmit={submitCOD}

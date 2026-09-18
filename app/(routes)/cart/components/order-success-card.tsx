@@ -24,7 +24,7 @@ export default function OrderSuccessCard({
         // trust API first; fallback to computed
         if (typeof order.totalPrice === "number") return order.totalPrice;
 
-        return order.products.reduce((sum, p) => sum + Number(p.price ?? 0), 0);
+        return order.products.reduce((sum, p) => sum + Number(p.price ?? 0) * (p.quantity ?? 1), 0);
     }, [order.totalPrice, order.products]);
 
     const onCopyTracking = async () => {
@@ -114,6 +114,13 @@ export default function OrderSuccessCard({
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-gray-600">
+                                        <span className="px-2 py-1 bg-gray-100 rounded-full">
+                                            Qty:{" "}
+                                            <span className="font-medium text-gray-800">
+                                                {p.quantity ?? 1}
+                                            </span>
+                                        </span>
+
                                         {p.size?.name ? (
                                             <span className="px-2 py-1 bg-gray-100 rounded-full">
                                                 Size:{" "}
@@ -147,7 +154,7 @@ export default function OrderSuccessCard({
                                 </div>
 
                                 <div className="text-sm font-semibold text-gray-900 shrink-0">
-                                    {formatMoney(Number(p.price ?? 0), {
+                                    {formatMoney(Number(p.price ?? 0) * (p.quantity ?? 1), {
                                         noDecimals: true,
                                     })}
                                 </div>

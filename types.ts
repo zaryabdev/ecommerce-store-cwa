@@ -3,6 +3,7 @@ export interface Product {
     category: Category;
     name: string;
     price: string;
+    quantity: number;
     isFeatured: boolean;
     size: Size;
     color: Color;
@@ -52,6 +53,7 @@ export type OrderResponse = {
         id: string;
         name: string;
         price: string | number;
+        quantity: number;
         size?: { id: string; name: string; value: string };
         color?: { id: string; name: string; value: string };
     }>;
@@ -73,7 +75,7 @@ export type OrderResponse = {
 };
 
 export type CreateOrderPayload = {
-    productIds: string[];
+    items: Array<{ productId: string; quantity: number }>;
     paymentMethod: "COD";
     customer?: {
         name?: string;

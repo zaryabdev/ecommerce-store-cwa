@@ -20,6 +20,8 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
     const cart = useCart();
     const router = useRouter();
 
+    const inStock = data.quantity > 0;
+
     const handleClick = () => {
         router.push(`/product/${data?.id}`);
     };
@@ -32,6 +34,8 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
 
     const onAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
         event.stopPropagation();
+
+        if (!inStock) return;
 
         cart.addItem(data);
     };
@@ -49,6 +53,11 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
                     fill
                     className="object-cover rounded-md aspect-square"
                 />
+                {!inStock && (
+                    <div className="absolute px-2 py-1 text-xs font-medium text-white bg-black/70 rounded-full top-2 left-2">
+                        Out of stock
+                    </div>
+                )}
                 <div className="absolute w-full px-6 transition opacity-0 group-hover:opacity-100 bottom-5">
                     <div className="flex justify-center gap-x-6">
                         <IconButton
@@ -57,15 +66,17 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
                                 <Expand size={20} className="text-gray-600" />
                             }
                         />
-                        <IconButton
-                            onClick={onAddToCart}
-                            icon={
-                                <ShoppingCart
-                                    size={20}
-                                    className="text-gray-600"
-                                />
-                            }
-                        />
+                        {inStock && (
+                            <IconButton
+                                onClick={onAddToCart}
+                                icon={
+                                    <ShoppingCart
+                                        size={20}
+                                        className="text-gray-600"
+                                    />
+                                }
+                            />
+                        )}
                     </div>
                 </div>
             </div>
