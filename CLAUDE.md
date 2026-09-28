@@ -65,7 +65,7 @@ Checkout sends `{ productId, quantity }` line items; authoritative prices/stock 
 
 ## Cross-Repo Billboard Caveat
 
-The home page currently calls `getBillboard(NEXT_PUBLIC_STORE_ID)`. The Admin route is known to misuse the `billboardId` parameter as a Store ID, so this behavior is bug-dependent. Do not change only one side without understanding the other.
+Correction (verified against source): the home page no longer calls `getBillboard(NEXT_PUBLIC_STORE_ID)`. It calls `getHomepageBillboard()` (`actions/get-homepage-billboard.tsx`), which hits `{NEXT_PUBLIC_API_URL}/homepage-billboard` with no id param. `actions/get-billboard.tsx` (the old `/billboards/{id}` call) is currently unused by any page in this repo — do not remove it as unrelated cleanup. The previously-documented Admin `billboardId`-as-`storeId` bug described that old call path; whether it still applies to `/homepage-billboard` has not been re-verified here — Requires Admin verification.
 
 ## Known Existing Issues
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 interface CurrencyProps {
     value?: string | number;
@@ -15,10 +15,10 @@ const Currency: React.FC<CurrencyProps> = ({
     locale = "en-PK",
     noDecimals = true,
 }) => {
-    const [isMounted, setIsMounted] = useState(false);
-
-    useEffect(() => setIsMounted(true), []);
-
+    // No isMounted gate: locale/currency are fixed explicit arguments (not
+    // derived from the browser's system locale), so Intl.NumberFormat
+    // produces the same output on the server and the client — there is no
+    // hydration mismatch to guard against here.
     const formatter = useMemo(() => {
         return new Intl.NumberFormat(locale, {
             style: "currency",
@@ -28,10 +28,8 @@ const Currency: React.FC<CurrencyProps> = ({
         });
     }, [currency, locale, noDecimals]);
 
-    if (!isMounted) return null;
-
     return (
-        <div className="font-semibold">{formatter.format(Number(value))}</div>
+        <div className="font-semibold text-foreground">{formatter.format(Number(value))}</div>
     );
 };
 

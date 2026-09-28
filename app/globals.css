@@ -2,8 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Default theme foundation — semantic design tokens.
+ *
+ * Light mode only. Only one theme ("Default") exists for Phase 1; no
+ * dark-mode variables, no theme-switching, and no merchant-configurable
+ * brand color are defined here (the Store API/type currently exposes only
+ * name + logoUrl, no color field — see Storefront audit, Section 5).
+ *
+ * These tokens are consumed via tailwind.config.js (theme.extend.colors /
+ * borderRadius / boxShadow) as new, additive utility names (bg-surface,
+ * text-muted-foreground, rounded-surface, etc.). They intentionally do not
+ * redefine Tailwind's default palette/scale, so existing components that
+ * reference raw Tailwind utilities (bg-black, text-gray-500, rounded-xl...)
+ * keep rendering exactly as before.
+ */
+:root {
+  --color-background: #ffffff;
+  --color-foreground: #18181b;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f9fafb;
+
+  --color-border: #e5e7eb;
+
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+
+  --color-primary: #18181b;
+  --color-primary-foreground: #ffffff;
+
+  --color-success: #16a34a;
+  --color-success-foreground: #ffffff;
+
+  --color-danger: #dc2626;
+  --color-danger-foreground: #ffffff;
+
+  --color-focus: #2563eb;
+
+  --radius-control: 0.75rem;
+  --radius-surface: 1.25rem;
+  --shadow-surface: 0 20px 40px -20px rgba(24, 24, 27, 0.25);
+}
+
 html,
 body,
 :root {
   height: 100%;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+::selection {
+  background-color: var(--color-focus);
+  color: var(--color-primary-foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }

@@ -125,7 +125,7 @@ There is no `/checkout`, `/success`, or `/cancel` page in this app — there is 
 The storefront is **single-tenant per deployment** and determines its Store via a **build-time/runtime environment variable**, not any dynamic lookup (no subdomain routing, no cookie, no header):
 
 - `NEXT_PUBLIC_STORE_ID` — the Admin CMS's Store ID for this deployment.
-  - Used directly in `app/(routes)/page.tsx` to fetch the home billboard: `getBillboard(process.env.NEXT_PUBLIC_STORE_ID)`.
+  - **Correction (verified against source, supersedes the rest of this section's `getBillboard` references below):** the home page no longer fetches the billboard this way. `app/(routes)/page.tsx` now calls `getHomepageBillboard()` (`actions/get-homepage-billboard.tsx`), which hits `{NEXT_PUBLIC_API_URL}/homepage-billboard` and takes no id param at all — `NEXT_PUBLIC_STORE_ID` is not passed to it. `actions/get-billboard.tsx` (the `/billboards/{id}` action described elsewhere in this document) is currently unused by any page in this repo.
   - Used in `components/navbar.tsx` to fetch store branding (name/logo) via `getStore(storeId)`.
 - For every other resource (categories, products, sizes, colors, billboards-by-category), the store scoping is **baked into `NEXT_PUBLIC_API_URL` itself** — this env var is expected to already be the store-scoped Admin API base (the tutorial's Admin generates per-store routes like `/api/{storeId}/...`), so `actions/get-products.tsx` etc. never pass a `storeId` explicitly. The store identity for those calls is implicit in whichever URL was configured at deploy time.
 
@@ -145,7 +145,8 @@ Communication with the Admin/CMS is **pure REST-over-HTTP, unauthenticated from 
 | Method | Endpoint (relative to store-scoped base unless noted) | Purpose | Called From |
 |---|---|---|---|
 | GET | `{NEXT_PUBLIC_API_BASE_URL}/stores/{storeId}` | Fetch store name/logo | `actions/get-store.tsx` → `components/navbar.tsx` |
-| GET | `{NEXT_PUBLIC_API_URL}/billboards/{billboardId}` | Fetch a single billboard | `actions/get-billboard.tsx` → home page |
+| GET | `{NEXT_PUBLIC_API_URL}/billboards/{billboardId}` | Fetch a single billboard | `actions/get-billboard.tsx` — **currently unused by any page** (superseded by `/homepage-billboard` below) |
+| GET | `{NEXT_PUBLIC_API_URL}/homepage-billboard` | Fetch the home page's billboard (no id param) | `actions/get-homepage-billboard.tsx` → home page |
 | GET | `{NEXT_PUBLIC_API_URL}/categories` | List all categories | `actions/get-categories.tsx` → navbar |
 | GET | `{NEXT_PUBLIC_API_URL}/categories/{id}` | Fetch one category (incl. its billboard) | `actions/get-category.tsx` → category page |
 | GET | `{NEXT_PUBLIC_API_URL}/colors` | List color filter options | `actions/get-colors.tsx` → category page |
@@ -154,7 +155,7 @@ Communication with the Admin/CMS is **pure REST-over-HTTP, unauthenticated from 
 | GET | `{NEXT_PUBLIC_API_URL}/products/{id}` | Fetch single product | `actions/get-product.tsx` → product page |
 | POST | `{NEXT_PUBLIC_API_URL}/cod` `CreateOrderPayload` (`{ items: { productId, quantity }[], paymentMethod: "COD", customer, shipping }`) | Create a Cash-on-Delivery order — the only active checkout/write endpoint | `app/(routes)/cart/components/summary.tsx` (`submitCOD`) |
 
-Note: `getBillboard` is called with `NEXT_PUBLIC_STORE_ID` as its `id` param on the home page, but the same function's URL pattern is `/billboards/{id}` — implying the Admin API's "get billboard by id" endpoint doubles as "get store's default/standalone billboard" when passed the store ID rather than a billboard ID (or the two IDs coincide by convention in this deployment). Not verifiable from this repo alone; would need to be confirmed against the Admin repo.
+Correction (verified against source): the note that previously stood here described an old call path (`getBillboard(NEXT_PUBLIC_STORE_ID)` against `/billboards/{id}`) that the home page no longer uses. The home page now calls the dedicated `/homepage-billboard` endpoint directly (no id param, no store-ID-as-billboard-ID ambiguity). `get-billboard.tsx`/`/billboards/{id}` remains in the codebase but unused — whether it is still relied on by anything outside this repo, or should eventually be removed, would need to be confirmed against the Admin repo.
 
 # Product & Catalog Architecture
 
@@ -197,7 +198,7 @@ The Storefront trusts Admin as the accounting source of truth: it sends only `pr
 
 # Major Customer Flows
 
-1. **Load home page** → `app/(routes)/page.tsx` (server) → `getProducts({isFeatured:true})` + `getBillboard(STORE_ID)` → renders `Billboard` + `ProductList`. `Navbar` (also server, rendered from layout) independently calls `getCategories()` + `getStore(STORE_ID)`.
+1. **Load home page** → `app/(routes)/page.tsx` (server) → `getProducts({isFeatured:true})` + `getHomepageBillboard()` (corrected — no longer `getBillboard(STORE_ID)`) → renders `Billboard` + `ProductList`. `Navbar` (also server, rendered from layout) independently calls `getCategories()` + `getStore(STORE_ID)`.
 2. **Load billboard** → either the store's default billboard (home) or a category's attached billboard (category page, embedded in `getCategory()`'s response) → rendered by the same `ui/billboard.tsx` component using `data.imageUrl` as a CSS background-image.
 3. **Load categories** → `getCategories()` in `Navbar`, rendered as top-nav links (`MainNav`), highlighting the active category via `usePathname()`. Categories carry `parentId`, and `get-products.tsx`'s `includeChildCategories` flag supports parent/child category browsing.
 4. **Browse a category** → `/category/[categoryId]` (server) → `getProducts` (scoped + filtered) + `getCategory` + `getSizes`/`getColors` for filter chips.
@@ -350,7 +351,7 @@ There is no `typecheck` script; `tsc --noEmit` would need to be run manually (`t
 **Potential concerns (inferred, not directly confirmed without the Admin repo):**
 - All Admin API calls appear to be **unauthenticated** from this side — if the Admin API's public read endpoints aren't properly scoped/rate-limited, this is an Admin-repo-side concern, not fixable here, but worth flagging since this storefront has no way to attach credentials even if the Admin API required them.
 - Because the cart stores full `Product` objects (including `price`) rather than just IDs, and price is only re-validated server-side at `/cod` time (assumed, not verifiable here) — if the Admin backend trusted the client-submitted price rather than re-pricing from `productId`, this would be a price-tampering risk. This repo only sends `{productId, quantity}` (never a price) to `/cod`, which is the correct mitigation *if* the Admin backend re-fetches authoritative prices/stock by ID — this should be verified in the Admin repo, not assumed here.
-- The `getBillboard(NEXT_PUBLIC_STORE_ID)` call on the home page assumes the Admin API's billboard-by-id endpoint accepts a Store ID interchangeably with a Billboard ID; this should be confirmed against the Admin repo's route implementation rather than assumed from this side.
+- Correction: this bullet previously described a `getBillboard(NEXT_PUBLIC_STORE_ID)` call on the home page assuming the Admin billboard-by-id endpoint accepted a Store ID interchangeably with a Billboard ID. The home page no longer makes that call — it uses the dedicated `/homepage-billboard` endpoint via `getHomepageBillboard()`, which takes no id param, so this specific concern no longer applies to the home page. Whether `/homepage-billboard` has its own Admin-side correctness caveats would need to be confirmed against the Admin repo.
 
 # What I Should Re-Learn First
 

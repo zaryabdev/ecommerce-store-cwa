@@ -38,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-black/50" />
+                    <div className="fixed inset-0 bg-foreground/50" />
                 </Transition.Child>
 
                 {/* Panel wrapper */}
@@ -57,7 +57,7 @@ const Modal: React.FC<ModalProps> = ({
                                 className={[
                                     "w-full",
                                     maxWidthClassName,
-                                    "overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5",
+                                    "max-h-[90vh] overflow-y-auto rounded-surface border border-border bg-surface shadow-surface",
                                 ].join(" ")}
                             >
                                 <div className="relative p-5 sm:p-6">
@@ -65,13 +65,14 @@ const Modal: React.FC<ModalProps> = ({
                                     <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
                                         <IconButton
                                             onClick={onClose}
+                                            aria-label="Close dialog"
                                             icon={<X size={16} />}
                                         />
                                     </div>
 
                                     {/* Title */}
                                     {title ? (
-                                        <Dialog.Title className="pr-10 text-base font-semibold text-gray-900 sm:text-lg">
+                                        <Dialog.Title className="pr-12 text-subheading text-foreground">
                                             {title}
                                         </Dialog.Title>
                                     ) : null}

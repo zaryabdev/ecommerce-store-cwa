@@ -50,7 +50,7 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
             
             {/* Close button */}
             <div className="flex items-center justify-end px-4">
-              <IconButton icon={<X size={15} />} onClick={onClose} />
+              <IconButton icon={<X size={15} />} onClick={onClose} aria-label="Close filters" />
             </div>
 
             <div className="p-4">

@@ -62,6 +62,7 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
                     <div className="flex justify-center gap-x-6">
                         <IconButton
                             onClick={onPreview}
+                            aria-label="Quick view"
                             icon={
                                 <Expand size={20} className="text-gray-600" />
                             }
@@ -69,6 +70,7 @@ const ProductCard: React.FC<ProductCard> = ({ data }) => {
                         {inStock && (
                             <IconButton
                                 onClick={onAddToCart}
+                                aria-label="Add to cart"
                                 icon={
                                     <ShoppingCart
                                         size={20}

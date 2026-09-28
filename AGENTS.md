@@ -113,7 +113,7 @@ Document these; do not silently implement them as part of unrelated work:
 
 The current Admin database is PostgreSQL, even though old tutorial documentation mentions MySQL/PlanetScale.
 
-The home billboard flow currently relies on a buggy Admin endpoint: Storefront calls `/billboards/{NEXT_PUBLIC_STORE_ID}`, while the Admin handler incorrectly uses the `billboardId` path parameter as a `storeId` query. Do not "simplify" this call without coordinating the Admin fix.
+Correction (verified against source): the home page no longer calls `getBillboard(NEXT_PUBLIC_STORE_ID)` / `/billboards/{id}`. It now calls `getHomepageBillboard()` (`actions/get-homepage-billboard.tsx`), which hits `{NEXT_PUBLIC_API_URL}/homepage-billboard` with no id param. `actions/get-billboard.tsx` (the old `/billboards/{id}` call described below) is currently unused by any page in this repo — do not remove it as unrelated cleanup, and do not assume it is still live without checking call sites first. The previously-documented Admin bug (`billboardId` path param misused as a `storeId` query) described the old call path; whether it still applies to the current `/homepage-billboard` endpoint has not been re-verified here — Requires Admin verification.
 
 ## Known Current Issues
 
