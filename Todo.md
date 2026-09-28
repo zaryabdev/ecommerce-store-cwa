@@ -19,7 +19,7 @@ Architecture constraints that apply to every phase below:
 - [ ] Build the mobile-first responsive layout system (base breakpoints, containers, grid)
 - [x] Redesign mobile header/navigation around the existing category hierarchy (including parent/child categories)
 - [x] Redesign homepage (billboard, featured products, category entry points) mobile-first
-- [ ] Redesign category/product-listing experience (filters, listing grid, pagination/loading)
+- [x] Redesign category/product-listing experience (filters, listing grid, pagination/loading)
 - [ ] Redesign product-detail experience (gallery, info panel, add-to-cart with stock-aware quantity controls)
 - [ ] Redesign cart experience (line items, quantity controls, stock clamping feedback, totals)
 - [ ] Redesign COD checkout experience (customer/shipping form, order submission, `OrderSuccessCard`)

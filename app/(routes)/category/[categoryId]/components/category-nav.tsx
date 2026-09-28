@@ -23,19 +23,19 @@ const CategoryNav: React.FC<CategoryNavProps> = ({
 
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-semibold">
+      <h3 className="text-subheading text-foreground">
         Categories
       </h3>
-      <hr className="my-4" />
-      <nav className="flex flex-col gap-y-3">
+      <nav className="mt-3 flex flex-col gap-y-1">
         {routes.map((route) => (
           <Link
             key={route.id}
             href={`/category/${route.id}`}
             onClick={onNavigate}
+            aria-current={route.id === activeId ? "page" : undefined}
             className={cn(
-              'text-sm font-medium transition-colors hover:text-black',
-              route.id === activeId ? 'text-black' : 'text-neutral-500'
+              'flex min-h-[44px] items-center rounded-control px-2 text-body transition-colors hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+              route.id === activeId ? 'font-semibold text-foreground' : 'text-muted-foreground'
             )}
           >
             {route.label}

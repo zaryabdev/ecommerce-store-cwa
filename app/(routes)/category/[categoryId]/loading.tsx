@@ -4,14 +4,22 @@ import Skeleton from "@/components/ui/skeleton";
 const Loading = () => {
   return (
     <Container>
-      <div className="w-full h-full p-8">
-        <Skeleton className="w-full aspect-square rounded-xl md:aspect-[2.4/1]" />
-        <div className="lg:grid lg:grid-cols-5 lg:gap-x-8 mt-8 h-full">
-          <div className="hidden lg:block">
-            <Skeleton className="w-full h-[500px] rounded-xl" />
+      <div className="p-4 sm:p-6 lg:p-8">
+        <Skeleton className="w-full aspect-[16/9] rounded-xl sm:aspect-[21/9] md:aspect-[3/1]" />
+      </div>
+      <div className="px-4 sm:px-6 lg:px-8 pb-24">
+        <Skeleton className="mb-6 h-8 w-48" />
+        <div className="lg:grid lg:grid-cols-5 lg:gap-x-8">
+          <div className="hidden lg:block space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-40 w-full rounded-xl" />
           </div>
           <div className="mt-6 lg:col-span-4 lg:mt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <Skeleton className="h-11 w-28 rounded-xl" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
               <Skeleton className="aspect-square rounded-xl" />
               <Skeleton className="aspect-square rounded-xl" />
               <Skeleton className="aspect-square rounded-xl" />
@@ -25,5 +33,5 @@ const Loading = () => {
     </Container>
   );
 }
- 
+
 export default Loading;

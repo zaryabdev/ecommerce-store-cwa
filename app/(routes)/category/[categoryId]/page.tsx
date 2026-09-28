@@ -1,8 +1,8 @@
+import Link from "next/link";
 
 import Container from '@/components/ui/container';
 import Billboard from '@/components/ui/billboard';
 import ProductCard from '@/components/ui/product-card';
-import NoResults from '@/components/ui/no-results';
 import { cn } from '@/lib/utils';
 
 import getProducts from "@/actions/get-products";
@@ -27,8 +27,8 @@ interface CategoryPageProps {
   }
 }
 
-const CategoryPage: React.FC<CategoryPageProps> = async ({ 
-  params, 
+const CategoryPage: React.FC<CategoryPageProps> = async ({
+  params,
   searchParams
 }) => {
   const products = await getProducts({
@@ -52,22 +52,28 @@ const CategoryPage: React.FC<CategoryPageProps> = async ({
     : [];
   const family = parent && children.length > 0 ? { parent, children } : null;
 
+  // Product count reflects exactly what this (unpaginated) request
+  // returned — never a global/paginated total.
+  const activeFilterCount = [searchParams.sizeId, searchParams.colorId].filter(Boolean).length;
+  const hasActiveFilters = activeFilterCount > 0;
+  const clearFiltersHref = `/category/${category.id}`;
+
   return (
-    <div className="bg-white">
+    <div className="bg-background">
       <Container>
         {category.billboard && (
-          <Billboard 
+          <Billboard
             data={category.billboard}
+            // Shorter than the homepage hero (which uses aspect-[4/5] at
+            // the smallest breakpoint) — the category billboard is
+            // secondary context here, not the page's main visual.
+            aspectClassName="aspect-[16/9] sm:aspect-[21/9] md:aspect-[3/1]"
           />
         )}
         <div className={cn("px-4 sm:px-6 lg:px-8 pb-24", !category.billboard && "pt-8")}>
+          <h1 className="mb-6 text-heading text-foreground">{category.name}</h1>
+
           <div className="lg:grid lg:grid-cols-5 lg:gap-x-8">
-            <MobileFilters
-              sizes={sizes}
-              colors={colors}
-              family={family}
-              activeCategoryId={category.id}
-            />
             <div className="hidden lg:block">
               {family && (
                 <CategoryNav
@@ -76,23 +82,63 @@ const CategoryPage: React.FC<CategoryPageProps> = async ({
                   activeId={category.id}
                 />
               )}
+              {hasActiveFilters && (
+                <div className="mb-4 flex justify-end">
+                  <Link
+                    href={clearFiltersHref}
+                    className="text-meta font-semibold text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Clear filters
+                  </Link>
+                </div>
+              )}
               <Filter
-                valueKey="sizeId" 
-                name="Sizes" 
+                valueKey="sizeId"
+                name="Sizes"
                 data={sizes}
               />
-              <Filter 
-                valueKey="colorId" 
-                name="Colors" 
+              <Filter
+                valueKey="colorId"
+                name="Colors"
                 data={colors}
               />
             </div>
             <div className="mt-6 lg:col-span-4 lg:mt-0">
-              {products.length === 0 && <NoResults />}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {products.map((item) => (
-                  <ProductCard key={item.id} data={item} />
-                ))}
+              <div className="flex items-center justify-between gap-4">
+                <MobileFilters
+                  sizes={sizes}
+                  colors={colors}
+                  family={family}
+                  activeCategoryId={category.id}
+                  activeFilterCount={activeFilterCount}
+                />
+                <p className="text-meta text-muted-foreground">
+                  {products.length} {products.length === 1 ? "product" : "products"}
+                </p>
+              </div>
+
+              <div className="mt-4">
+                {products.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-16 text-center">
+                    <p className="text-body text-muted-foreground">
+                      No products found — try adjusting your filters.
+                    </p>
+                    {hasActiveFilters && (
+                      <Link
+                        href={clearFiltersHref}
+                        className="text-body font-semibold text-foreground underline underline-offset-2 hover:text-muted-foreground"
+                      >
+                        Clear filters
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+                    {products.map((item) => (
+                      <ProductCard key={item.id} data={item} />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
