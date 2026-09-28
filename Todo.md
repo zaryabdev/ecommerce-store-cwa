@@ -17,8 +17,8 @@ Architecture constraints that apply to every phase below:
 - [ ] Audit current Storefront UI/UX source (components, pages, styles) before starting redesign work
 - [ ] Establish the Default theme's visual/design foundation (typography, color tokens, spacing scale)
 - [ ] Build the mobile-first responsive layout system (base breakpoints, containers, grid)
-- [ ] Redesign mobile header/navigation around the existing category hierarchy (including parent/child categories)
-- [ ] Redesign homepage (billboard, featured products, category entry points) mobile-first
+- [x] Redesign mobile header/navigation around the existing category hierarchy (including parent/child categories)
+- [x] Redesign homepage (billboard, featured products, category entry points) mobile-first
 - [ ] Redesign category/product-listing experience (filters, listing grid, pagination/loading)
 - [ ] Redesign product-detail experience (gallery, info panel, add-to-cart with stock-aware quantity controls)
 - [ ] Redesign cart experience (line items, quantity controls, stock clamping feedback, totals)

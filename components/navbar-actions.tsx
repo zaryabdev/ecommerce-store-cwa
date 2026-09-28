@@ -4,7 +4,7 @@ import { ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import Button from "@/components/ui/button";
+import IconButton from "@/components/ui/icon-button";
 import useCart from "@/hooks/use-cart";
 
 const NavbarActions = () => {
@@ -21,19 +21,26 @@ const NavbarActions = () => {
     return null;
   }
 
-  return ( 
-    <div className="ml-auto flex items-center gap-x-4">
-      <Button onClick={() => router.push('/cart')} className="flex items-center rounded-full bg-black px-4 py-2">
-        <ShoppingBag
-          size={20}
-          color="white"
-        />
-        <span className="ml-2 text-sm font-medium text-white">
-          {cart.items.reduce((total, item) => total + item.quantity, 0)}
+  // Unchanged business logic: total quantity across cart lines.
+  const itemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+
+  return (
+    <div className="relative flex items-center">
+      <IconButton
+        onClick={() => router.push('/cart')}
+        aria-label={itemCount > 0 ? `Cart, ${itemCount} item${itemCount === 1 ? '' : 's'}` : 'Cart'}
+        icon={<ShoppingBag size={20} />}
+      />
+      {itemCount > 0 && (
+        <span
+          aria-hidden="true"
+          className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground"
+        >
+          {itemCount}
         </span>
-      </Button>
+      )}
     </div>
   );
 }
- 
+
 export default NavbarActions;
