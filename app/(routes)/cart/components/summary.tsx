@@ -12,6 +12,16 @@ import { CreateOrderPayload, OrderResponse } from "@/types";
 import CODDetailsForm from "./cod-details-form";
 import OrderSuccessCard from "./order-success-card";
 
+/**
+ * Only Subtotal/Total are shown — there is no shipping, tax, or discount
+ * concept anywhere in `CreateOrderPayload`/`OrderResponse`, so a single
+ * "Total" line is used rather than a redundant identical "Subtotal" line
+ * with nothing between it and the total (see Task 7 report, Section 6/11).
+ * This total is a client-side display computation from the current cart
+ * snapshot only — Admin re-prices and validates authoritatively at order
+ * time; the COD payload below still sends only `{ productId, quantity }`,
+ * never a price.
+ */
 const Summary = () => {
     const items = useCart((state) => state.items);
     const removeAll = useCart((state) => state.removeAll);
@@ -60,34 +70,38 @@ const Summary = () => {
 
     if (codOrder) {
         return (
-            <div className="px-4 py-6 mt-16 sm:p-6 lg:col-span-5 lg:mt-0 lg:p-8">
-                <OrderSuccessCard
-                    order={codOrder}
-                    onContinue={() => setCodOrder(null)}
-                />
-            </div>
+            <OrderSuccessCard
+                order={codOrder}
+                onContinue={() => setCodOrder(null)}
+            />
         );
     }
 
     return (
-        <div className="px-4 py-6 mt-16 rounded-lg bg-gray-50 sm:p-6 lg:col-span-5 lg:mt-0 lg:p-8">
-            <h2 className="text-lg font-medium text-gray-900">Order summary</h2>
+        <div className="rounded-surface border border-border bg-surface-muted p-6">
+            <h2 className="text-subheading text-foreground">Order Summary</h2>
 
-            <div className="mt-6 space-y-4">
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <div className="text-base font-medium text-gray-900">
-                        Order total
-                    </div>
+            <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                <span className="text-body font-medium text-foreground">Total</span>
+                <div aria-live="polite">
                     <Currency value={totalPrice} />
                 </div>
             </div>
 
+            {/*
+              This button opens the customer/shipping details form (a Modal
+              containing CODDetailsForm) — it does not place the order
+              itself. The order is only actually submitted when that form's
+              own "Place Order" button is clicked. "Continue to Checkout"
+              describes what clicking THIS button actually does; the
+              underlying behavior (onClick opens the modal) is unchanged.
+            */}
             <Button
                 onClick={() => setIsCODModalOpen(true)}
                 disabled={items.length === 0}
-                className="w-full mt-6 bg-green-600 hover:bg-green-700"
+                className="mt-6 w-full justify-center bg-success text-success-foreground"
             >
-                Place Order
+                Continue to Checkout
             </Button>
 
             <Modal

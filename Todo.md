@@ -25,7 +25,7 @@ Architecture constraints that apply to every phase below:
 [ ] Add product-list pagination/infinite-loading strategy when catalog scale requires it
 
 - [x] Redesign product-detail experience (gallery, info panel, add-to-cart with stock-aware quantity controls)
-- [ ] Redesign cart experience (line items, quantity controls, stock clamping feedback, totals)
+- [x] Redesign cart experience (line items, quantity controls, stock clamping feedback, totals)
 - [ ] Redesign COD checkout experience (customer/shipping form, order submission, `OrderSuccessCard`)
 - [ ] Build shared loading/empty/error states reused across routes
 - [ ] Accessibility pass (keyboard nav, focus states, color contrast, screen-reader labeling)
