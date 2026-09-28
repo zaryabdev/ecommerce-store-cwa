@@ -13,33 +13,53 @@ interface ProductPageProps {
   },
 }
 
-const ProductPage: React.FC<ProductPageProps> = async ({ 
+// Related Products is a quick browsing aid, not a second catalog page — cap
+// it so it can't grow unbounded in a large category. 8 gives exactly two
+// full rows at the 4-column desktop grid width used below.
+const RELATED_PRODUCTS_LIMIT = 8;
+
+const ProductPage: React.FC<ProductPageProps> = async ({
   params
  }) => {
   const product = await getProduct(params.productId);
-  const suggestedProducts = await getProducts({ 
-    categoryId: product?.category?.id
-  });
 
   if (!product) {
     return null;
   }
 
+  const suggestedProducts = await getProducts({
+    categoryId: product?.category?.id
+  });
+
+  // Exclude the current product from its own "related" list, and cap the
+  // count — both are plain array operations on the data already returned,
+  // not a new API/commerce capability.
+  const relatedProducts = suggestedProducts
+    .filter((item) => item.id !== product.id)
+    .slice(0, RELATED_PRODUCTS_LIMIT);
+
   return (
-    <div className="bg-white">
+    <div className="bg-background">
       <Container>
-        <div className="px-4 py-10 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-            <Gallery images={product.images} />
-            <div className="mt-10 px-4 sm:mt-16 sm:px-0 lg:mt-0">
+        <div className="flex flex-col gap-y-10 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12">
+            <Gallery images={product.images} productName={product.name} priority />
+            <div className="mt-8 lg:mt-0">
               <Info data={product} />
             </div>
           </div>
-          <hr className="my-10" />
-          <ProductList title="Related Items" items={suggestedProducts} />
+
+          {relatedProducts.length > 0 && (
+            <ProductList
+              title="Related Products"
+              items={relatedProducts}
+              headingClassName="text-heading text-foreground"
+              gridClassName="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4"
+            />
+          )}
         </div>
       </Container>
-    </div>  
+    </div>
   )
 }
 

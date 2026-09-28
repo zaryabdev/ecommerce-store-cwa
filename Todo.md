@@ -3,6 +3,7 @@
 Owned by this repo: public customer-facing rendering, mobile-first UX, navigation, homepage, category/product listing, product detail, cart, COD checkout, and shared loading/empty/error states.
 
 Architecture constraints that apply to every phase below:
+
 - One Storefront deployment = one Store. No database/Prisma/customer auth here; Admin is the authoritative backend and this repo is a pure public API consumer.
 - COD is currently the only active checkout flow. Online/card payment returns later as a proper Admin-backed capability (see Admin `Todo.md`), not during this redesign.
 - `Product.quantity` already exists and the cart already uses `{ product, quantity }` items with stock clamping — do not reintroduce a no-quantity/bare-array cart model.
@@ -19,8 +20,11 @@ Architecture constraints that apply to every phase below:
 - [ ] Build the mobile-first responsive layout system (base breakpoints, containers, grid)
 - [x] Redesign mobile header/navigation around the existing category hierarchy (including parent/child categories)
 - [x] Redesign homepage (billboard, featured products, category entry points) mobile-first
-- [x] Redesign category/product-listing experience (filters, listing grid, pagination/loading)
-- [ ] Redesign product-detail experience (gallery, info panel, add-to-cart with stock-aware quantity controls)
+      [x] Redesign category/product-listing experience - mobile-first filters - listing grid - loading/empty states
+
+[ ] Add product-list pagination/infinite-loading strategy when catalog scale requires it
+
+- [x] Redesign product-detail experience (gallery, info panel, add-to-cart with stock-aware quantity controls)
 - [ ] Redesign cart experience (line items, quantity controls, stock clamping feedback, totals)
 - [ ] Redesign COD checkout experience (customer/shipping form, order submission, `OrderSuccessCard`)
 - [ ] Build shared loading/empty/error states reused across routes
@@ -29,7 +33,7 @@ Architecture constraints that apply to every phase below:
 - [ ] Adapt the mobile-first system up to tablet/desktop breakpoints after the mobile experience is solid
 - [ ] Final first-client Storefront presentation QA pass
 
-*Note: theme-active display and per-Store branding management for Phase 1 are Admin-owned — see Admin `Todo.md`.*
+_Note: theme-active display and per-Store branding management for Phase 1 are Admin-owned — see Admin `Todo.md`._
 
 ---
 
@@ -43,7 +47,7 @@ Rendering/integration work for the merchant-managed homepage content defined in 
 - [ ] Render homepage "Shop by Category" using the existing category hierarchy
 - [ ] Render promotional/banner content positions defined by Admin's homepage merchandising configuration
 
-*Note: Storvia controls page structure in this phase — no drag-and-drop/page-builder rendering.*
+_Note: Storvia controls page structure in this phase — no drag-and-drop/page-builder rendering._
 
 ---
 
