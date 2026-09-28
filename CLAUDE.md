@@ -35,20 +35,33 @@ Do not consolidate them unless that is the task.
 
 ## Cart Model
 
-The cart persists full Product objects in Zustand/localStorage.
+The cart persists `{ product: Product; quantity: number }[]` in Zustand/localStorage (`hooks/use-cart.tsx`), not a bare Product array.
 
-- one line per Product ID
-- no quantities
-- duplicate adds blocked
-- a Product is already one fixed size/color combination
+- one line per Product ID; adding an existing product increments its line
+- quantity is first-class and clamped to `product.quantity` (available stock)
+- out-of-stock products (`quantity <= 0`) cannot be added
+- a Product is already one fixed size/color combination — no variant matrix
+- checkout sends `{ productId, quantity }`, never a price
 
-Do not assume a variant or quantity model exists.
+Stock enforcement here is UX-level only; Admin remains authoritative. Do not reintroduce a bare `Product[]` cart shape or remove quantity support.
+
+## Categories
+
+`Category` supports `parentId`; the Storefront already consumes parent/child category navigation (`includeChildCategories` on `get-products`). Do not assume deeper taxonomy than this.
 
 ## Checkout
 
-Checkout: customer/shipping form -> `/cod` -> returned order summary -> `OrderSuccessCard`.
+Checkout: customer/shipping form -> `/cod` -> returned order summary -> `OrderSuccessCard`. COD is the only active checkout flow.
 
-Checkout sends product IDs; authoritative prices must remain server-side in Admin.
+Checkout sends `{ productId, quantity }` line items; authoritative prices/stock must remain server-side in Admin. A legacy `"STRIPE"` value remains in `OrderResponse.paymentMethod`'s type union for compatibility with Admin's response shape only — it is inert, not an active capability, and should not be resurrected or removed as unrelated cleanup.
+
+## Current Storefront Limitations
+
+- no customer authentication — guest checkout only
+- no customer order-history/account/status page
+- no post-submission polling/status lookup after a COD order is placed
+- no product variant matrix
+- browser-known stock can go stale before submission; Admin validates authoritatively
 
 ## Cross-Repo Billboard Caveat
 
@@ -61,7 +74,6 @@ Do not silently repair during unrelated tasks:
 - split API URL env vars
 - missing `res.ok` checks in most fetch helpers
 - no `error.tsx` boundaries
-- no cart quantities
 - generic SEO metadata
 - stale/dead tutorial code and assets
 

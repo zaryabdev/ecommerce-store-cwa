@@ -47,23 +47,28 @@ Do not change or consolidate these environment variables as unrelated cleanup.
 
 ## Cart Rules
 
-Current cart shape is effectively `items: Product[]`.
+Current cart shape is `items: { product: Product; quantity: number }[]` (see `hooks/use-cart.tsx`).
 
-- full Product objects are persisted
-- Product ID is cart-line identity
-- duplicates are blocked
-- quantity is not supported
-- different fixed size/color Product rows are separate items
-- total is derived by summing item prices
-- checkout sends product IDs only
+- Product ID is cart-line identity; adding an existing product increments its line instead of duplicating it.
+- quantity is a first-class concept and is clamped to `product.quantity` (available stock) on add/increment.
+- products with `quantity <= 0` cannot be added (out-of-stock is blocked client-side).
+- different fixed size/color Product rows are separate cart lines (see Product Model).
+- total is derived from `price * quantity` per line.
+- checkout sends `{ productId, quantity }` pairs, never a price.
 
-Do not introduce quantity semantics accidentally while working on unrelated cart UI.
+Quantity/stock enforcement here is UX-level only. Admin remains the authoritative source for stock correctness — do not invent client-side stock reservation semantics.
+
+Do not reintroduce a bare `Product[]` cart shape or remove quantity support.
 
 ## Product Model
 
-A Product already represents one fixed size + one fixed color combination. The Storefront does not provide a runtime variant matrix selector.
+A Product already represents one fixed size + one fixed color combination, plus its own `quantity` (stock). The Storefront does not provide a runtime variant matrix selector — there is no parent-product + variants model. Different size/color combinations are separate Product records.
 
-Before implementing variant-related features, inspect the Admin data model and API as well.
+Before implementing variant-related features, inspect the Admin data model and API as well. Do not assume a Shopify-style variant matrix unless the backend is deliberately changed first.
+
+## Categories
+
+`Category` supports `parentId` (see `types.ts`), and the Storefront already consumes parent/child category structure for navigation (`includeChildCategories` on `get-products`). Do not assume deeper taxonomy behavior than this.
 
 ## Admin API Contract
 
@@ -80,6 +85,8 @@ The Storefront consumes Admin routes for:
 
 If a feature requires a field the current API does not provide, do not fabricate it client-side. Identify the required Admin change.
 
+A legacy `"STRIPE"` value remains in the `OrderResponse.paymentMethod` type union (`types.ts`) for compatibility with Admin's response shape. It is an inert, type-level leftover, not an active Storefront capability — do not resurrect a Stripe checkout flow, and do not remove the type as unrelated cleanup.
+
 ## Checkout Flows
 
 ### Checkout / COD
@@ -91,6 +98,16 @@ If a feature requires a field the current API does not provide, do not fabricate
 - render returned order in `OrderSuccessCard`
 
 Country is currently hard-coded to `PK` for COD.
+
+## Current Storefront Limitations
+
+Document these; do not silently implement them as part of unrelated work:
+
+- no customer authentication — guest checkout only
+- no customer order-history/account/status page
+- no post-submission polling or status lookup after a COD order is placed
+- no product size/color variant matrix (see Product Model)
+- browser-known stock can go stale before submission; Admin performs the authoritative validation
 
 ## Important Cross-Repo Facts
 
@@ -105,7 +122,6 @@ Do not silently fix these during unrelated work:
 - split API base environment variables
 - most read helpers do not check `res.ok`
 - no route `error.tsx` boundaries
-- no quantities
 - no runtime validation of Admin API responses
 - generic metadata only
 - dead tutorial assets/dependencies/debug logs remain

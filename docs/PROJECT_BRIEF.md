@@ -8,14 +8,15 @@
 
 This repository is the **customer-facing storefront** for a multi-tenant e-commerce platform. It was originally scaffolded from Antonio Erdeljac's "Full Stack E-Commerce + Dashboard & CMS" tutorial (Next.js 13 App Router + Prisma/MySQL Admin CMS), as confirmed by the README and `LICENSE` (MIT, Copyright Antonio Erdeljac).
 
-The repo has since **diverged significantly from the tutorial** (per git log: `USD to PKR`, `added COD to UI`, `added floating whatsapp button`, `added : customer details for COD`, `added : brand logo`, `added : store id to env`). It is now customized for a **Pakistan-based single-store deployment**:
+The repo has since **diverged significantly from the tutorial**. It is now customized for a **Pakistan-based single-store deployment**:
 
 - Currency formatting hard-coded to `PKR` / `en-PK` locale.
-- A full **Cash-on-Delivery (COD)** ordering flow has been added alongside the original Stripe checkout flow.
+- **Cash-on-Delivery (COD) is the only active checkout flow.** The original tutorial's Stripe checkout has been fully removed from this repo — there is no `/checkout` POST, no Stripe redirect, and no Stripe SDK/dependency anywhere in the codebase. The only remaining trace is an inert `"STRIPE"` value kept in the `OrderResponse.paymentMethod` type union (`types.ts`) for compatibility with Admin's response shape — it is a type-level leftover, not a capability.
+- The cart is quantity-aware: `{ product: Product; quantity: number }[]`, with client-side stock clamping (see Cart Architecture).
 - A floating WhatsApp contact button has been added.
 - The store's logo/name is fetched dynamically from the Admin API instead of being hard-coded.
 
-The README still describes the original tutorial's full feature set (Clerk auth, multi-vendor admin, Stripe webhooks) — that describes the **Admin/CMS repo**, not this repo. This repo contains **no authentication, no admin functionality, and no database access** — it is a pure API-consuming frontend.
+The README still describes the original tutorial's full feature set (Clerk auth, multi-vendor admin, Stripe webhooks) — that describes the **Admin/CMS repo**, not this repo. This repo contains **no authentication, no admin functionality, and no database access** — it is a pure API-consuming frontend, guest checkout only.
 
 # Technology Stack
 
@@ -37,7 +38,7 @@ The README still describes the original tutorial's full feature set (Clerk auth,
 
 Installed but **unused** (dead dependencies): `date-fns`, `react-spinners`, `@tailwindcss/aspect-ratio` (not registered in `tailwind.config.js` plugins array).
 
-No Stripe SDK, no ORM, no database client, no auth library are present in this repo — all of that lives in the Admin/CMS application.
+No Stripe SDK, no ORM, no database client, no auth library are present in this repo — all of that lives in the Admin/CMS application. (`OrderResponse.paymentMethod` retains a `"STRIPE"` value in its TS union purely for compatibility with Admin's response shape; it is inert here.)
 
 # Repository Structure
 
@@ -115,9 +116,9 @@ This is a **server-rendered, mostly server-component** Next.js 13 App Router app
 | `/` | `app/(routes)/page.tsx` | Server | Featured products, billboard (by `NEXT_PUBLIC_STORE_ID`) |
 | `/category/[categoryId]` | `app/(routes)/category/[categoryId]/page.tsx` | Server | Products (filtered), category (+ its billboard), sizes, colors |
 | `/product/[productId]` | `app/(routes)/product/[productId]/page.tsx` | Server | Single product, related products (same category) |
-| `/cart` | `app/(routes)/cart/page.tsx` | Client | Reads from local cart store only; posts to Admin API on checkout/COD |
+| `/cart` | `app/(routes)/cart/page.tsx` | Client | Reads from local cart store only; posts to Admin API on COD submission |
 
-There is no `/checkout`, `/success`, or `/cancel` **page** in this app — the Stripe redirect target is `/cart` itself, disambiguated via `?success=1` / `?canceled=1` query params (see Checkout & Payments).
+There is no `/checkout`, `/success`, or `/cancel` page in this app — there is no Stripe redirect target, since COD is the only checkout flow and it completes in-page (see Checkout & Payments).
 
 # Store Resolution
 
@@ -135,7 +136,7 @@ The storefront is **single-tenant per deployment** and determines its Store via 
 Communication with the Admin/CMS is **pure REST-over-HTTP, unauthenticated from the storefront's side** (no API key, no bearer token, no signature is attached to any outgoing request). This mirrors the CWA tutorial's Admin API design, where the Admin app exposes public, CORS-enabled REST endpoints per store for read operations, and semi-public POST endpoints for cart/order actions.
 
 - **Server-side reads** (`actions/*.tsx`) use native `fetch`. Only `get-store.tsx` passes `{ cache: "no-store" }` explicitly; the rest rely on the page-level `export const revalidate = 0` to force dynamic, uncached fetches.
-- **Client-side writes** (`summary.tsx`) use `axios.post` for `/checkout` and `/cod`.
+- **Client-side writes** (`summary.tsx`) use `axios.post` for `/cod` (the only active write endpoint).
 - No shared API client module exists — each `actions/*.tsx` file independently constructs its own URL from environment variables and calls `fetch`/`res.json()`. There is no centralized error handling, retry logic, or response validation (e.g. no zod/schema check) — API responses are trusted and cast directly to TS interfaces.
 - `next.config.js` whitelists two remote image domains: `tailwindui.com` (tutorial placeholder demo images, now dead) and `res.cloudinary.com` (the real image host — the Admin app very likely stores product/billboard images on Cloudinary and returns Cloudinary URLs).
 
@@ -151,14 +152,15 @@ Communication with the Admin/CMS is **pure REST-over-HTTP, unauthenticated from 
 | GET | `{NEXT_PUBLIC_API_URL}/sizes` | List size filter options | `actions/get-sizes.tsx` → category page |
 | GET | `{NEXT_PUBLIC_API_URL}/products` (+ `categoryId`/`colorId`/`sizeId`/`isFeatured` query) | List/filter products | `actions/get-products.tsx` → home, category, product (related) pages |
 | GET | `{NEXT_PUBLIC_API_URL}/products/{id}` | Fetch single product | `actions/get-product.tsx` → product page |
-| POST | `{NEXT_PUBLIC_API_URL}/checkout` `{ productIds }` | Create a Stripe Checkout Session | `app/(routes)/cart/components/summary.tsx` (`onCheckout`) |
-| POST | `{NEXT_PUBLIC_API_URL}/cod` `CreateOrderPayload` | Create a Cash-on-Delivery order | `app/(routes)/cart/components/summary.tsx` (`submitCOD`) |
+| POST | `{NEXT_PUBLIC_API_URL}/cod` `CreateOrderPayload` (`{ items: { productId, quantity }[], paymentMethod: "COD", customer, shipping }`) | Create a Cash-on-Delivery order — the only active checkout/write endpoint | `app/(routes)/cart/components/summary.tsx` (`submitCOD`) |
 
 Note: `getBillboard` is called with `NEXT_PUBLIC_STORE_ID` as its `id` param on the home page, but the same function's URL pattern is `/billboards/{id}` — implying the Admin API's "get billboard by id" endpoint doubles as "get store's default/standalone billboard" when passed the store ID rather than a billboard ID (or the two IDs coincide by convention in this deployment). Not verifiable from this repo alone; would need to be confirmed against the Admin repo.
 
 # Product & Catalog Architecture
 
-The catalog model (from `types.ts`) treats each **`Product` row as a single fixed variant** — a product has exactly one `size: Size` and one `color: Color` (not arrays of available options), consistent with the original tutorial's data model where a "product" is really a SKU (e.g. "Red Hoodie / L" and "Red Hoodie / M" are two separate `Product` records sharing a `name`/`category`).
+The catalog model (from `types.ts`) treats each **`Product` row as a single fixed variant** — a product has exactly one `size: Size`, one `color: Color`, and its own `quantity` (stock), not arrays of available options (e.g. "Red Hoodie / L" and "Red Hoodie / M" are two separate `Product` records sharing a `name`/`category`). There is no parent-product + variants matrix; future UI work must not assume one unless the backend is deliberately changed first.
+
+`Category` supports `parentId`, and `get-products.tsx` exposes an opt-in `includeChildCategories` flag that expands a top-level `categoryId` filter to include its immediate children — parent/child category navigation is already consumed by the Storefront.
 
 - **Home page**: featured products (`isFeatured: true`) + a billboard.
 - **Category page**: products filtered server-side by `categoryId` + optional `colorId`/`sizeId` query params; also renders that category's billboard, and both desktop (`Filter`) and mobile (`MobileFilters`) size/color pickers.
@@ -170,53 +172,46 @@ The catalog model (from `types.ts`) treats each **`Product` row as a single fixe
 
 Implemented entirely client-side via Zustand (`hooks/use-cart.tsx`), no server-side cart/session concept exists.
 
-- **State storage**: `items: Product[]` — the cart stores full denormalized `Product` objects (not `{productId, qty}` references). No dedicated cart-item shape.
+- **State storage**: `items: { product: Product; quantity: number }[]` — each cart line pairs a denormalized `Product` object with a quantity. A `persist` `migrate` function normalizes any pre-existing v0 localStorage cart (the old bare-`Product[]` shape) into this shape on load, so old visitors don't hit a broken hydration.
 - **Persistence**: `zustand/middleware`'s `persist` + `createJSONStorage(() => localStorage)`, key `"cart-storage"`. Survives reloads and tabs on the same browser; not synced across devices, not tied to any account (there is no account system).
 - **Item identity**: a product's own `id` is the cart line identity. Since each `Product` already represents one fixed size+color combination, "variant handling" is implicit — adding "Red Hoodie / L" and "Red Hoodie / M" produces two distinct cart entries because they are two distinct `Product.id`s. There is no in-cart variant switcher.
-- **Quantities**: **not supported.** `addItem` explicitly checks for an existing item with the same `id` and, if found, shows a toast ("Item already in cart.") and returns early instead of incrementing a quantity. Every cart line is implicitly quantity 1; total price is `sum(item.price)` across unique items, computed inline in `summary.tsx` via `useMemo`, not stored in the cart itself.
+- **Quantities**: first-class. `addItem` clamps the requested quantity to `product.quantity` (available stock) via a `clampQuantity` helper; adding an existing product increments its line (also clamped) instead of duplicating it; products with `quantity <= 0` are rejected with a toast. `incrementItem`/`decrementItem` apply the same stock clamp. Total price is `sum(price * quantity)` across lines, computed inline in `summary.tsx` via `useMemo`, not stored in the cart itself. This enforcement is UX-level only — Admin remains authoritative on stock correctness.
 - **Removal**: `removeItem(id)` filters the array and toasts success. Triggered by the `X` icon button on each `CartItem`.
-- **Clearing**: `removeAll()` empties `items`; called automatically after a successful Stripe redirect (`?success=1`) and after a successful COD submission.
+- **Clearing**: `removeAll()` empties `items`; called automatically after a successful COD submission.
 - **Dead code**: `cart-item-info.tsx` is an unused alternate cart-line renderer (never imported anywhere).
 
 # Checkout & Payments
 
-Two independent, parallel checkout paths exist in `app/(routes)/cart/components/summary.tsx`, both gated on `items.length > 0`:
+Cash on Delivery is the **only active checkout path**, implemented in `app/(routes)/cart/components/summary.tsx` (`submitCOD`), gated on `items.length > 0`. There is no Stripe checkout in this repo — no `/checkout` route call, no Stripe SDK, no redirect flow. The only remaining trace of Stripe is the inert `"STRIPE"` value in `OrderResponse.paymentMethod`'s type union, kept for compatibility with Admin's response shape.
 
-**1. Stripe (`onCheckout`)**
-1. Client posts `{ productIds }` (array of cart item IDs) to `${NEXT_PUBLIC_API_URL}/checkout` via `axios`.
-2. The Admin backend (not in this repo) is expected to create a Stripe Checkout Session server-side and return `{ url: <stripe checkout url> }`.
-3. The browser is redirected via `window.location.href = response.data.url` — a full navigation away to Stripe-hosted checkout.
-4. Stripe's `success_url`/`cancel_url` (configured Admin-side, not visible here) must point back at this storefront's `/cart` route with `?success=1` or `?canceled=1`.
-5. Back on `/cart`, a `useEffect` watching `useSearchParams()` shows a toast ("Payment completed." / "Something went wrong.") and, on success, calls `removeAll()` to clear the local cart.
-6. **No order confirmation UI exists for the Stripe path** — unlike COD, there is no fetch of the created order/receipt after redirect; the customer only sees a toast. Actual order persistence, payment capture, and any webhook handling happen entirely in the Admin repo (Stripe webhooks are explicitly called out in that tutorial's feature list).
-
-**2. Cash on Delivery (`submitCOD`)**
-1. Clicking "Cash on Delivery" opens a `Modal` containing `CODDetailsForm` (client-side form, manual `useState` + hand-rolled required-field validation — no form library like react-hook-form/zod despite `CreateOrderPayload` being a well-typed shape).
-2. On submit, builds a `CreateOrderPayload` (`productIds`, `paymentMethod: "COD"`, `customer{name,phone,email}`, `shipping{line1,line2,city,postalCode,country:"PK",notes}`) and posts it to `${NEXT_PUBLIC_API_URL}/cod`.
-3. The Admin backend creates the order directly (no payment gateway involved) and returns an `OrderResponse` (order id, tracking id, status, total, store, line items with resolved size/color).
+**Cash on Delivery (`submitCOD`)**
+1. Clicking "Place Order" opens a `Modal` containing `CODDetailsForm` (client-side form, manual `useState` + hand-rolled required-field validation — no form library like react-hook-form/zod despite `CreateOrderPayload` being a well-typed shape).
+2. On submit, builds a `CreateOrderPayload` (`items: { productId, quantity }[]`, `paymentMethod: "COD"`, `customer{name,phone,email}`, `shipping{line1,line2,city,postalCode,country:"PK",notes}`) and posts it to `${NEXT_PUBLIC_API_URL}/cod`. No price is ever sent — Admin re-prices and validates stock server-side.
+3. The Admin backend creates the order directly (no payment gateway involved) and returns an `OrderResponse` (order id, tracking id, status, total, store, line items with resolved size/color/quantity).
 4. On success: cart is cleared (`removeAll()`), the modal closes, a toast fires, and the returned order is rendered inline via `OrderSuccessCard` (tracking ID with copy-to-clipboard, status, total, itemized list) — replacing the order-summary panel in place (no route change).
 5. On failure: the raw Admin error string (if `error.response.data` is a string) or a generic message is toasted; the modal stays open so the user can retry.
 
 Country is **hard-coded to `"PK"`** in the COD payload — confirming this is a single-country (Pakistan) deployment, not a generic template anymore.
 
+The Storefront trusts Admin as the accounting source of truth: it sends only `productId` + `quantity`, and displays whatever price/total Admin's `OrderResponse` returns, but does not compute or own authoritative pricing itself. This repo does not know (and should not assume) how or when Admin commits inventory against a DRAFT order — only that Admin performs server-side stock/price validation before confirming.
+
 # Major Customer Flows
 
 1. **Load home page** → `app/(routes)/page.tsx` (server) → `getProducts({isFeatured:true})` + `getBillboard(STORE_ID)` → renders `Billboard` + `ProductList`. `Navbar` (also server, rendered from layout) independently calls `getCategories()` + `getStore(STORE_ID)`.
 2. **Load billboard** → either the store's default billboard (home) or a category's attached billboard (category page, embedded in `getCategory()`'s response) → rendered by the same `ui/billboard.tsx` component using `data.imageUrl` as a CSS background-image.
-3. **Load categories** → `getCategories()` in `Navbar`, rendered as top-nav links (`MainNav`), highlighting the active category via `usePathname()`.
+3. **Load categories** → `getCategories()` in `Navbar`, rendered as top-nav links (`MainNav`), highlighting the active category via `usePathname()`. Categories carry `parentId`, and `get-products.tsx`'s `includeChildCategories` flag supports parent/child category browsing.
 4. **Browse a category** → `/category/[categoryId]` (server) → `getProducts` (scoped + filtered) + `getCategory` + `getSizes`/`getColors` for filter chips.
 5. **Load products** → `getProducts(query)` builds a query-string GET against `.../products`.
 6. **Filter products** → clicking a `Filter` chip mutates the URL's `sizeId`/`colorId` query param and does a full `router.push`, re-running the server page with new `searchParams`.
 7. **Open a product** → `ProductCard` click → `router.push('/product/{id}')` → server page fetches `getProduct(id)` + related `getProducts({categoryId})`.
 8. **Select variants** → not a runtime action; the "variant" is fixed per `Product` record. The customer instead navigates between sibling `Product` records (different size/color) as if they were different products.
-9. **Add/remove cart items** → `useCart().addItem(product)` (blocks duplicates) / `.removeItem(id)`, callable from `ProductCard`, `Info` (product page), `PreviewModal`'s `Info`, and the `X` button on `CartItem`.
+9. **Add/remove cart items** → `useCart().addItem(product, quantity)` (clamps to available stock, increments existing lines) / `.incrementItem(id)` / `.decrementItem(id)` / `.removeItem(id)`, callable from `ProductCard`, `Info` (product page), `PreviewModal`'s `Info`, and the cart page.
 10. **Cart persistence** → automatic via Zustand `persist` → `localStorage["cart-storage"]`; rehydrated on every load, gated behind an `isMounted` check to avoid hydration mismatches.
-11. **Start checkout** → `/cart` → `Summary` → choose Stripe ("Proceed to Payment") or COD ("Cash on Delivery").
-12. **Stripe checkout** → POST `/checkout` → redirect to Stripe-hosted page (external, Admin-issued URL).
-13. **Successful checkout (Stripe)** → Stripe redirects back to `/cart?success=1` → toast + `removeAll()`. No local order record is fetched or displayed.
-13b. **Successful checkout (COD)** → in-page: `OrderSuccessCard` renders the Admin's returned order immediately, no redirect.
-14. **Order creation** → happens **entirely server-side in the Admin app** — for Stripe, at Checkout Session completion/webhook; for COD, synchronously inside the `/cod` endpoint handler. This repo never writes order data itself.
-15. **Post-payment behaviour** → cart clears; for COD the tracking ID/status are surfaced; for Stripe, nothing further is fetched (a gap — see Technical Debt).
+11. **Start checkout** → `/cart` → `Summary` → "Place Order" opens the COD details modal.
+12. **Submit COD order** → `CODDetailsForm` collects customer/shipping details → POST `/cod` with `{productId, quantity}` line items.
+13. **Successful order** → in-page: `OrderSuccessCard` renders the Admin's returned order immediately, no redirect.
+14. **Order creation** → happens entirely server-side in the Admin app, synchronously inside the `/cod` endpoint handler. This repo never writes order data itself.
+15. **Post-order behaviour** → cart clears; the tracking ID/status/total are surfaced via `OrderSuccessCard`. There is no later Storefront polling or order-status lookup flow after this point.
 
 # State Management
 
@@ -225,7 +220,7 @@ Country is **hard-coded to `"PK"`** in the COD payload — confirming this is a 
   - `usePreviewModal` (`hooks/use-preview-modal.ts`) — ephemeral quick-view modal state, not persisted.
 - No React Context is used for app state (Context only implicitly via Headless UI internals).
 - No server-state/caching library (no SWR, no React Query, no RTK Query) — all server data arrives via RSC props at render time; client mutations use plain `axios` calls with local `useState` for loading/result, no cache invalidation needed since there's nothing cached client-side.
-- Local component `useState`/`useMemo`/`useCallback` handle all form and derived-value state (`CODDetailsForm`, `Summary`'s `totalPrice`/`productIds`).
+- Local component `useState`/`useMemo`/`useCallback` handle all form and derived-value state (`CODDetailsForm`, `Summary`'s `totalPrice`/`orderItems`).
 
 # UI Architecture
 
@@ -276,7 +271,7 @@ No secret/server-only environment variables exist in this repo — every variabl
 - **Loading UI**: `loading.tsx` files exist for the root route group, category page, and product page, each rendering `Skeleton` placeholders matching that page's approximate layout (Next.js App Router's automatic Suspense boundary per route segment).
 - **No `error.tsx` boundary files exist anywhere** — an unhandled server-side fetch failure (e.g. Admin API down, non-JSON error response) will surface as Next.js's default unstyled error page, not a branded error UI.
 - Server actions (`actions/*.tsx`) mostly call `res.json()` unconditionally without checking `res.ok` — only `get-store.tsx` checks `res.ok` and throws a descriptive error; every other action will silently attempt to parse an error page/body as JSON and either throw a JSON-parse error or return malformed data to the page.
-- Client-side error handling is a bit better on the COD path (`try/catch` around `axios.post`, toasts a message from `error.response.data` if it's a string) but the Stripe `onCheckout` call has **no error handling at all** — a failed `/checkout` POST will throw an unhandled promise rejection with no user feedback.
+- Client-side error handling on the COD path is reasonable (`try/catch` around `axios.post`, toasts a message from `error.response.data` if it's a string, modal stays open to retry).
 - `get-store.tsx` contains leftover debug `console.log` statements logging the constructed URL — should be considered noise/cleanup candidate, not a functional issue.
 
 # SEO / Metadata
@@ -322,15 +317,14 @@ There is no `typecheck` script; `tsc --noEmit` would need to be run manually (`t
 
 **Required external services to run this app locally/in full:**
 - The companion **Admin/CMS application** must be running and reachable at the configured `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_API_BASE_URL`, seeded with at least one Store, Category, Billboard, and Product, for any page beyond a bare shell to render meaningfully.
-- **Stripe** (configured Admin-side) for the "Proceed to Payment" path to function — this repo holds no Stripe keys itself.
 - **Cloudinary** (or whichever host serves `imageUrl`/`url` fields returned by the Admin API) must be reachable for product/billboard/logo images to load, and its domain must stay listed in `next.config.js`'s `images.domains`.
 
 # Important Files
 
 | File | Responsibility | Why It Matters |
 |---|---|---|
-| `hooks/use-cart.tsx` | Cart state, persistence, add/remove logic | The entire cart model (no quantities, dedupe-by-id) lives here — misunderstanding this file leads to wrong assumptions about "quantity" support |
-| `app/(routes)/cart/components/summary.tsx` | Both checkout paths (Stripe + COD), success/cancel handling | The one file where payment, order creation, and cart-clearing all meet |
+| `hooks/use-cart.tsx` | Cart state, persistence, add/remove/quantity logic | The entire cart model (`{product, quantity}` lines, stock clamping, dedupe-by-id) lives here — misunderstanding this file leads to wrong assumptions about quantity/stock support |
+| `app/(routes)/cart/components/summary.tsx` | COD checkout (the sole active flow) | The one file where order creation and cart-clearing meet |
 | `actions/get-store.tsx` | Store branding fetch; the odd-one-out env var usage | Key to the store-resolution inconsistency documented above |
 | `types.ts` | `Product`, `Order*`, `Store` shapes | Defines the entire data contract with the Admin API; no runtime validation exists elsewhere, so this file *is* the contract |
 | `next.config.js` | Allowed remote image domains | Silently breaks image rendering if the Admin/image host changes and isn't added here |
@@ -346,8 +340,6 @@ There is no `typecheck` script; `tsc --noEmit` would need to be run manually (`t
 - **Two different Admin-API base env vars** (`NEXT_PUBLIC_API_URL` or store-scoped calls vs. `NEXT_PUBLIC_API_BASE_URL` for `get-store.tsx`) — easy to misconfigure; if only one is set, either every catalog fetch breaks or the navbar's store branding silently falls back to defaults.
 - **No `res.ok` checks** in `get-billboard`, `get-categories`, `get-category`, `get-colors`, `get-sizes`, `get-product`, `get-products` — Admin API errors surface as confusing JSON-parse exceptions or malformed data instead of clear errors.
 - **No `error.tsx` boundaries anywhere** — any of the above failures produce Next's default error page, not a branded fallback.
-- **No error handling on the Stripe checkout POST** (`onCheckout` in `summary.tsx`) — a failed request throws unhandled, with no user feedback (contrast with the COD path, which does have try/catch + toast).
-- **No order confirmation for the Stripe path** — after redirect back with `?success=1`, only a toast fires; no order/receipt is fetched or shown, unlike the COD flow's `OrderSuccessCard`.
 - **Dead code**: `constants.ts` (entirely unused Tailwind-UI demo placeholder data), `app/(routes)/cart/components/cart-item-info.tsx` (unused alternate cart-line component), unused dependencies `date-fns`, `react-spinners`, `@tailwindcss/aspect-ratio`, and unused static assets in `public/` (`bag.png`, `coat.png`, `scarf.png`, `image.png`, `user.png`, `billboard-bg*.png`, `bg.svg`, `next.svg`, `vercel.svg`).
 - **Debug `console.log` statements** left in `actions/get-store.tsx`.
 - **Stale README**: still describes the Admin tutorial's full feature set (Clerk, multi-vendor, Stripe webhooks) as if it were this repo's own README; its `.env` example has a duplicated `NEXT_PUBLIC_WHATSAPP_NUMBER` line and is missing `NEXT_PUBLIC_API_BASE_URL`.
@@ -357,7 +349,7 @@ There is no `typecheck` script; `tsc --noEmit` would need to be run manually (`t
 
 **Potential concerns (inferred, not directly confirmed without the Admin repo):**
 - All Admin API calls appear to be **unauthenticated** from this side — if the Admin API's public read endpoints aren't properly scoped/rate-limited, this is an Admin-repo-side concern, not fixable here, but worth flagging since this storefront has no way to attach credentials even if the Admin API required them.
-- Because the cart stores full `Product` objects (including `price`) rather than just IDs, and price is only re-validated server-side at `/checkout`/`/cod` time (assumed, not verifiable here) — if the Admin backend trusts the client-submitted price rather than re-pricing from `productIds` server-side, this would be a price-tampering risk. This repo only sends `productIds` (not prices) to both `/checkout` and `/cod`, which is the correct mitigation *if* the Admin backend re-fetches authoritative prices by ID — this should be verified in the Admin repo.
+- Because the cart stores full `Product` objects (including `price`) rather than just IDs, and price is only re-validated server-side at `/cod` time (assumed, not verifiable here) — if the Admin backend trusted the client-submitted price rather than re-pricing from `productId`, this would be a price-tampering risk. This repo only sends `{productId, quantity}` (never a price) to `/cod`, which is the correct mitigation *if* the Admin backend re-fetches authoritative prices/stock by ID — this should be verified in the Admin repo, not assumed here.
 - The `getBillboard(NEXT_PUBLIC_STORE_ID)` call on the home page assumes the Admin API's billboard-by-id endpoint accepts a Store ID interchangeably with a Billboard ID; this should be confirmed against the Admin repo's route implementation rather than assumed from this side.
 
 # What I Should Re-Learn First
@@ -365,7 +357,7 @@ There is no `typecheck` script; `tsc --noEmit` would need to be run manually (`t
 Recommended reading order to rebuild full context fastest:
 
 1. **`types.ts`** — the entire data contract in one file; everything else makes sense once this is internalized.
-2. **`hooks/use-cart.tsx`** — the cart model (no quantities, dedupe-by-product-id, localStorage persistence).
+2. **`hooks/use-cart.tsx`** — the cart model (`{product, quantity}` lines, stock clamping, dedupe-by-product-id, localStorage persistence).
 3. **`actions/*.tsx`** (all eight files, they're short) — how every page gets its data, and the store-resolution env var split.
 4. **`app/(routes)/page.tsx` → `components/navbar.tsx`** — trace one full server-rendered page to see the RSC → action → component data flow end to end.
 5. **`app/(routes)/category/[categoryId]/page.tsx` + `filter.tsx`** — the URL-query-string filtering pattern.
@@ -377,24 +369,21 @@ Recommended reading order to rebuild full context fastest:
 # Mental Model
 
 ```
-Browser (customer)
-   │  clicks, forms, localStorage cart
+Browser (customer, guest — no auth)
+   │  clicks, forms, localStorage cart ({product, quantity} lines)
    ▼
 Storefront (this repo — Next.js 13 App Router)
    │  Server Components: fetch() reads (categories, products, billboards, store)
-   │  Client Components: axios POST (checkout, COD) + Zustand cart/modal state
+   │  Client Components: axios POST /cod ({productId, quantity} lines) + Zustand cart/modal state
    ▼
 Admin API (separate repo — Next.js API routes, store-scoped)
-   │  owns: auth (Clerk), CRUD for stores/categories/products/sizes/colors/billboards/orders
-   │  creates Stripe Checkout Sessions; handles Stripe webhooks; creates COD orders directly
+   │  owns: auth (Clerk, admin-side only), CRUD for stores/categories/products/sizes/colors/billboards
+   │  owns: authoritative pricing, stock validation, order creation for COD orders
    ▼
-Database (Prisma + MySQL/PlanetScale, per the original tutorial — not visible from this repo)
+Database (Admin repo — PostgreSQL/Prisma per current Admin implementation — not visible from this repo)
    │  persists stores, catalog data, orders
-
-Stripe (external, only reachable from the Admin API and via browser redirect)
-   │  hosts the actual payment page; redirects the browser back to this storefront's /cart
 ```
 
-- **This repo's exact responsibility**: render the catalog, hold cart state client-side, and hand off both payment methods (redirect-to-Stripe or direct-POST-for-COD) to the Admin API — it performs **no persistence, no payment processing, and no authentication** of its own.
-- **The Admin repo's responsibility** (inferred, not present here): everything stateful — the actual database, all mutation logic, Stripe session/webhook handling, and multi-store administration.
-- **Stripe's responsibility**: hosting the payment page itself and reporting back to the Admin app via webhook (order confirmation happens Admin-side, independent of whether the customer's browser ever successfully returns to `/cart`).
+- **This repo's exact responsibility**: render the catalog, hold cart state client-side (with UX-level stock enforcement), and hand off the COD order (product/quantity line items + customer/shipping details, no price) to the Admin API — it performs **no persistence, no payment processing, and no authentication** of its own.
+- **The Admin repo's responsibility** (inferred, not present here): everything stateful — the actual database, all mutation logic, authoritative pricing/stock validation, and COD order creation.
+- There is no Stripe integration anywhere in this flow; the only trace of it is the inert `"STRIPE"` type-level value described above.
