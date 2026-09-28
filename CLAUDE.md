@@ -51,9 +51,9 @@ Stock enforcement here is UX-level only; Admin remains authoritative. Do not rei
 
 ## Checkout
 
-Checkout: customer/shipping form -> `/cod` -> returned order summary -> `OrderSuccessCard`. COD is the only active checkout flow.
+**Update (Task 8):** Checkout is now real routes, not a Cart modal. Cart's "Continue to Checkout" -> `/checkout` (Storvia's own internal COD checkout page — NOT a restored Stripe/card flow) -> `CODDetailsForm` (`app/(routes)/cart/components/cod-details-form.tsx`) collects customer/shipping details -> POST `/cod` -> on success, the `OrderResponse` is written to `sessionStorage` (key `storvia-last-order-confirmation`, see `lib/order-confirmation.ts`), the cart is cleared, and the browser navigates to `/order-confirmation`, which reads that value client-side (no Admin lookup call — none exists) and renders it via `OrderSuccessCard`. This sessionStorage value is NOT order history: no localStorage, no persisted list, a later order just overwrites it; it only survives a refresh or brief back-navigation in the same tab/session. COD remains the only active checkout flow.
 
-Checkout sends `{ productId, quantity }` line items; authoritative prices/stock must remain server-side in Admin. A legacy `"STRIPE"` value remains in `OrderResponse.paymentMethod`'s type union for compatibility with Admin's response shape only — it is inert, not an active capability, and should not be resurrected or removed as unrelated cleanup.
+Checkout sends `{ productId, quantity }` line items; authoritative prices/stock must remain server-side in Admin. A legacy `"STRIPE"` value remains in `OrderResponse.paymentMethod`'s type union for compatibility with Admin's response shape only — it is inert, not an active capability, and should not be resurrected or removed as unrelated cleanup. The new `/checkout` route is unrelated to this legacy value: it is Storvia's own COD-only page, with zero Stripe/card logic anywhere in it.
 
 ## Current Storefront Limitations
 

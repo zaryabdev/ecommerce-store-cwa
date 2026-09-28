@@ -116,9 +116,11 @@ This is a **server-rendered, mostly server-component** Next.js 13 App Router app
 | `/` | `app/(routes)/page.tsx` | Server | Featured products, billboard (by `NEXT_PUBLIC_STORE_ID`) |
 | `/category/[categoryId]` | `app/(routes)/category/[categoryId]/page.tsx` | Server | Products (filtered), category (+ its billboard), sizes, colors |
 | `/product/[productId]` | `app/(routes)/product/[productId]/page.tsx` | Server | Single product, related products (same category) |
-| `/cart` | `app/(routes)/cart/page.tsx` | Client | Reads from local cart store only; posts to Admin API on COD submission |
+| `/cart` | `app/(routes)/cart/page.tsx` | Client | Reads from local cart store only; no submission happens here anymore (Task 8) — the CTA navigates to `/checkout` |
+| `/checkout` | `app/(routes)/checkout/page.tsx` | Client | Reads from local cart store; renders `CODDetailsForm`; posts to Admin `/cod` on submit |
+| `/order-confirmation` | `app/(routes)/order-confirmation/page.tsx` | Client | Reads the just-placed order back from `sessionStorage` only — no Admin request of any kind |
 
-There is no `/checkout`, `/success`, or `/cancel` page in this app — there is no Stripe redirect target, since COD is the only checkout flow and it completes in-page (see Checkout & Payments).
+**Correction (Task 8, verified against source):** `/checkout` and `/order-confirmation` now exist. `/checkout` is **Storvia's own internal COD checkout page** — this is explicitly NOT a restored Stripe integration; there is still no Stripe redirect target, no Stripe SDK, and no card payment logic anywhere in this route or repo. COD remains the only active checkout flow; it now completes across these two dedicated pages instead of in-page inside a Cart modal (see Checkout & Payments, updated below).
 
 # Store Resolution
 
@@ -183,16 +185,20 @@ Implemented entirely client-side via Zustand (`hooks/use-cart.tsx`), no server-s
 
 # Checkout & Payments
 
-Cash on Delivery is the **only active checkout path**, implemented in `app/(routes)/cart/components/summary.tsx` (`submitCOD`), gated on `items.length > 0`. There is no Stripe checkout in this repo — no `/checkout` route call, no Stripe SDK, no redirect flow. The only remaining trace of Stripe is the inert `"STRIPE"` value in `OrderResponse.paymentMethod`'s type union, kept for compatibility with Admin's response shape.
+**Correction (Task 8, verified against source) — supersedes the numbered flow immediately below, which described the pre-Task-8 modal-based checkout:** Checkout was moved out of a Cart modal onto two dedicated routes: `/checkout` (`app/(routes)/checkout/page.tsx`) and `/order-confirmation` (`app/(routes)/order-confirmation/page.tsx`). `app/(routes)/cart/components/summary.tsx` no longer submits anything — its "Continue to Checkout" button only calls `router.push("/checkout")`. **`/checkout` is Storvia's own internal COD checkout page — this is NOT a restored Stripe integration.**
 
-**Cash on Delivery (`submitCOD`)**
-1. Clicking "Place Order" opens a `Modal` containing `CODDetailsForm` (client-side form, manual `useState` + hand-rolled required-field validation — no form library like react-hook-form/zod despite `CreateOrderPayload` being a well-typed shape).
-2. On submit, builds a `CreateOrderPayload` (`items: { productId, quantity }[]`, `paymentMethod: "COD"`, `customer{name,phone,email}`, `shipping{line1,line2,city,postalCode,country:"PK",notes}`) and posts it to `${NEXT_PUBLIC_API_URL}/cod`. No price is ever sent — Admin re-prices and validates stock server-side.
-3. The Admin backend creates the order directly (no payment gateway involved) and returns an `OrderResponse` (order id, tracking id, status, total, store, line items with resolved size/color/quantity).
-4. On success: cart is cleared (`removeAll()`), the modal closes, a toast fires, and the returned order is rendered inline via `OrderSuccessCard` (tracking ID with copy-to-clipboard, status, total, itemized list) — replacing the order-summary panel in place (no route change).
-5. On failure: the raw Admin error string (if `error.response.data` is a string) or a generic message is toasted; the modal stays open so the user can retry.
+Cash on Delivery is still the **only active checkout path**. There is no Stripe checkout in this repo — no Stripe SDK, no redirect flow, no card payment logic anywhere in `/checkout`. The only remaining trace of Stripe is the inert `"STRIPE"` value in `OrderResponse.paymentMethod`'s type union, kept for compatibility with Admin's response shape (untouched by Task 8).
 
-Country is **hard-coded to `"PK"`** in the COD payload — confirming this is a single-country (Pakistan) deployment, not a generic template anymore.
+**Cash on Delivery (current flow)**
+1. On `/cart`, clicking "Continue to Checkout" navigates to `/checkout` — no submission happens on this click.
+2. `/checkout` renders `CODDetailsForm` (`app/(routes)/cart/components/cod-details-form.tsx`, now full-page instead of inside a `Modal`; same client-side `useState` + hand-rolled required-field validation as before, unchanged semantics) alongside an Order Summary (real cart snapshot, display-only) and a read-only "Cash on Delivery" Payment Method section.
+3. On submit, builds the same `CreateOrderPayload` shape as before (`items: { productId, quantity }[]`, `paymentMethod: "COD"`, `customer{name,phone,email}`, `shipping{line1,line2,city,postalCode,country:"PK",notes}`) and posts it to `${NEXT_PUBLIC_API_URL}/cod`. No price is ever sent — Admin re-prices and validates stock server-side.
+4. The Admin backend creates the order directly (no payment gateway involved) and returns an `OrderResponse` (order id, tracking id, status, total, store, line items with resolved size/color/quantity) — unchanged.
+5. On success: the `OrderResponse` is written to `sessionStorage` (key `storvia-last-order-confirmation`, see `lib/order-confirmation.ts`), the cart is cleared (`removeAll()`), a toast fires, and the browser navigates (`router.replace`, not `push`) to `/order-confirmation`.
+6. `/order-confirmation` reads that `sessionStorage` value client-side (no Admin request of any kind — none exists) and renders it via `OrderSuccessCard` (tracking ID with copy-to-clipboard, status, total, itemized list). If nothing is stored (direct visit, expired session), it shows a graceful "no recent order confirmation was found" message instead of fabricating an order. This `sessionStorage` value is **not order history** — no localStorage, no persisted array/list; a later order simply overwrites the same key, and it naturally clears when the browser tab closes.
+7. On failure: the raw Admin error string (if `error.response.data` is a string) or a generic COD-appropriate message ("We couldn't place your order. Please review your details and try again." — never mentions "payment failure") is toasted; the cart and form values are left completely intact so the shopper can retry.
+
+Country is **hard-coded to `"PK"`** in the COD payload — confirming this is a single-country (Pakistan) deployment, not a generic template anymore. It is now also shown to the shopper as fixed display text ("Pakistan") in the delivery address section — never the raw "PK" code, and never as a selector.
 
 The Storefront trusts Admin as the accounting source of truth: it sends only `productId` + `quantity`, and displays whatever price/total Admin's `OrderResponse` returns, but does not compute or own authoritative pricing itself. This repo does not know (and should not assume) how or when Admin commits inventory against a DRAFT order — only that Admin performs server-side stock/price validation before confirming.
 
@@ -208,11 +214,11 @@ The Storefront trusts Admin as the accounting source of truth: it sends only `pr
 8. **Select variants** → not a runtime action; the "variant" is fixed per `Product` record. The customer instead navigates between sibling `Product` records (different size/color) as if they were different products.
 9. **Add/remove cart items** → `useCart().addItem(product, quantity)` (clamps to available stock, increments existing lines) / `.incrementItem(id)` / `.decrementItem(id)` / `.removeItem(id)`, callable from `ProductCard`, `Info` (product page), `PreviewModal`'s `Info`, and the cart page.
 10. **Cart persistence** → automatic via Zustand `persist` → `localStorage["cart-storage"]`; rehydrated on every load, gated behind an `isMounted` check to avoid hydration mismatches.
-11. **Start checkout** → `/cart` → `Summary` → "Place Order" opens the COD details modal.
-12. **Submit COD order** → `CODDetailsForm` collects customer/shipping details → POST `/cod` with `{productId, quantity}` line items.
-13. **Successful order** → in-page: `OrderSuccessCard` renders the Admin's returned order immediately, no redirect.
+11. **Start checkout** → `/cart` → `Summary` → "Continue to Checkout" navigates to `/checkout` (corrected — no longer opens a modal; no submission happens on this click).
+12. **Submit COD order** → on `/checkout`, `CODDetailsForm` collects customer/shipping details → POST `/cod` with `{productId, quantity}` line items.
+13. **Successful order** → the `OrderResponse` is written to `sessionStorage` (`storvia-last-order-confirmation`) and the browser navigates to `/order-confirmation` (corrected — no longer rendered in-page on `/cart` with no redirect; there is now a real route change, via `router.replace`).
 14. **Order creation** → happens entirely server-side in the Admin app, synchronously inside the `/cod` endpoint handler. This repo never writes order data itself.
-15. **Post-order behaviour** → cart clears; the tracking ID/status/total are surfaced via `OrderSuccessCard`. There is no later Storefront polling or order-status lookup flow after this point.
+15. **Post-order behaviour** → cart clears; the tracking ID/status/total are surfaced via `OrderSuccessCard` on `/order-confirmation`, reading from `sessionStorage` only. There is no later Storefront polling or order-status lookup flow after this point — `/order-confirmation` makes no Admin request.
 
 # State Management
 

@@ -91,13 +91,15 @@ A legacy `"STRIPE"` value remains in the `OrderResponse.paymentMethod` type unio
 
 ### Checkout / COD
 
-- collect customer/shipping information
-- POST to `/cod`
-- Admin creates order
-- clear cart
-- render returned order in `OrderSuccessCard`
+**Update (Task 8):** `/checkout` and `/order-confirmation` now exist as real routes. `/checkout` is Storvia's own internal COD checkout page — it is NOT a restored Stripe/card integration; Stripe remains fully removed/inactive (the inert `"STRIPE"` type value noted above is unrelated to this route and was not touched).
 
-Country is currently hard-coded to `PK` for COD.
+- Cart's "Continue to Checkout" button navigates to `/checkout` (no submission happens on Cart itself)
+- `/checkout` collects customer/shipping information via `CODDetailsForm` (`app/(routes)/cart/components/cod-details-form.tsx`, now rendered full-page instead of inside a `Modal`)
+- POST to `/cod` (payload shape unchanged: `{ items: {productId, quantity}[], paymentMethod: "COD", customer?, shipping? }`, never a price)
+- On success: the returned `OrderResponse` is written to `sessionStorage` under the key `storvia-last-order-confirmation` (see `lib/order-confirmation.ts`), the cart is cleared, and the browser navigates (`router.replace`) to `/order-confirmation`
+- `/order-confirmation` reads that sessionStorage value client-side and renders it via `OrderSuccessCard` — **no Admin lookup request exists or is made here**. This is explicitly NOT order history: no localStorage, no persisted array/list, a later order simply overwrites the same key. If nothing is stored (direct visit, expired session), it shows a graceful "no recent order confirmation" message rather than fabricating an order.
+
+Country is currently hard-coded to `PK` for COD; the Storefront does not render a country selector (fixed "Pakistan" display text only where the address is shown).
 
 ## Current Storefront Limitations
 
