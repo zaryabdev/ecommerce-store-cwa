@@ -4,9 +4,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // http://localhost:3000/a
 
 const getStore = async (storeId: string): Promise<Store> => {
     const url = `${API_URL}/stores/${storeId}`;
-    console.log("getStore--------------------------");
-    console.log(url);
-    console.log("getStore--------------------------");
 
     const res = await fetch(url, { cache: "no-store" });
 

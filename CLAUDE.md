@@ -72,10 +72,12 @@ Correction (verified against source): the home page no longer calls `getBillboar
 Do not silently repair during unrelated tasks:
 
 - split API URL env vars
-- generic SEO metadata
+- ~~generic SEO metadata~~ — `<title>`/description now use the real Store name (Task 12); per-route metadata, Open Graph, structured data, sitemap/robots.txt still absent
 - stale/dead tutorial code and assets
 
 Resolved by Task 9 (Shared States + Hardening): all `actions/*.tsx` fetch helpers now check `res.ok` and throw; `app/error.tsx`, `app/global-error.tsx` and `app/not-found.tsx` now exist; `getProduct`/`getCategory` return `T | null` and call `notFound()` on a genuine miss (Admin returns HTTP 200 + `null` body for an unknown id, verified against source — not a 404 status).
+
+Resolved by Task 12 (Admin Branding Integration Cleanup): `app/layout.tsx` `generateMetadata()` and `components/footer.tsx` now show the real Store name instead of hardcoded placeholders. No merchant brand-color/favicon/hero field exists in Admin source — confirmed, not invented.
 
 ## Validation
 

@@ -123,10 +123,12 @@ Do not silently fix these during unrelated work:
 
 - split API base environment variables
 - no runtime validation of Admin API responses
-- generic metadata only
-- dead tutorial assets/dependencies/debug logs remain
+- ~~generic metadata only~~ — the `<title>`/description are resolved by Task 12 (see below); per-route metadata (product/category pages), Open Graph tags, structured data, and `sitemap.xml`/`robots.txt` remain unaddressed and out of scope for that task
+- dead tutorial assets/dependencies/debug logs remain — `actions/get-store.tsx`'s debug `console.log` lines were removed by Task 12 (its own change tripled that function's call frequency per page); the rest of this known-issue list is unchanged
 
 Resolved by Task 9 (Shared States + Hardening): all 9 `actions/*.tsx` fetch helpers now check `res.ok` and throw a normalized `Error` on failure (previously 7 of 9 silently mis-returned or crashed on JSON parse); `app/error.tsx`, `app/global-error.tsx` (root-layout-level, since `Navbar` fetches above any other boundary) and `app/not-found.tsx` now exist. `getProduct`/`getCategory` return `T | null` and the Product Detail / Category pages call `notFound()` on a genuine miss — verified directly against Admin's `GET /products/{id}` and `GET /categories/{id}` routes, both of which return HTTP 200 with a `null` body for an unknown id (not a 404 status), so this is a safe, source-confirmed mapping, not an inference.
+
+Resolved by Task 12 (Admin Branding Integration Cleanup): root `app/layout.tsx` now exports an async `generateMetadata()` reading the real Store name (was a static `{ title: "Store" }`); `components/footer.tsx` is now an async Server Component showing the real Store name (was a hardcoded "Store, Inc." placeholder). Both fall back to the generic "Store" name on a fetch failure rather than throwing — a real failure already surfaces via `Navbar`'s own unguarded `getStore()` call. Confirmed via source trace: no merchant brand-color/favicon/hero field exists anywhere in `ecommerce-admin-cwa`'s Prisma schema or API — not invented here.
 
 ## UI / Data Change Discipline
 
