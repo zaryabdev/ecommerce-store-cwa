@@ -39,7 +39,7 @@ const OrderConfirmationPage = () => {
                     <div className="px-4 py-16 sm:px-6 lg:px-8" role="status" aria-live="polite">
                         <span className="sr-only">Loading…</span>
                         <Skeleton className="h-9 w-56" />
-                        <Skeleton className="mt-8 h-72 w-full max-w-2xl rounded-2xl" />
+                        <Skeleton className="mx-auto mt-8 h-72 w-full max-w-2xl rounded-2xl" />
                     </div>
                 </Container>
             </div>
@@ -52,7 +52,7 @@ const OrderConfirmationPage = () => {
                 <Container>
                     <div className="px-4 py-16 sm:px-6 lg:px-8">
                         <h1 className="text-heading text-foreground">Order Confirmation</h1>
-                        <div className="mt-8 flex flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-20 text-center">
+                        <div className="mx-auto mt-8 flex max-w-xl flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-20 text-center">
                             <p className="text-subheading text-foreground">
                                 No recent order confirmation was found
                             </p>
@@ -78,7 +78,10 @@ const OrderConfirmationPage = () => {
             <Container>
                 <div className="px-4 py-16 sm:px-6 lg:px-8">
                     <h1 className="text-heading text-foreground">Order Confirmation</h1>
-                    <div className="mt-8">
+                    {/* mx-auto: previously left-pinned at its max-w-2xl cap
+                        on any viewport wider than ~700px, leaving a large
+                        dead gap on the right on tablet/desktop. */}
+                    <div className="mt-8 flex justify-center">
                         <OrderSuccessCard order={order} />
                     </div>
                 </div>

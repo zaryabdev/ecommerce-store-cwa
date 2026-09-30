@@ -128,7 +128,7 @@ const CategoryPage: React.FC<CategoryPageProps> = async ({
 
               <div className="mt-4">
                 {products.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-16 text-center">
+                  <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-16 text-center">
                     <p className="text-body text-muted-foreground">
                       No products found — try adjusting your filters.
                     </p>

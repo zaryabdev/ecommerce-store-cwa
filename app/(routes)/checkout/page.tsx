@@ -143,7 +143,7 @@ const CheckoutPage = () => {
                 <Container>
                     <div className="px-4 py-16 sm:px-6 lg:px-8">
                         <h1 className="text-heading text-foreground">Checkout</h1>
-                        <div className="mt-8 flex flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-20 text-center">
+                        <div className="mx-auto mt-8 flex max-w-xl flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-20 text-center">
                             <p className="text-subheading text-foreground">Your cart is empty</p>
                             <p className="text-body text-muted-foreground">
                                 Add products before continuing to checkout.

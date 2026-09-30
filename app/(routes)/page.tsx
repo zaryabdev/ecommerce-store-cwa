@@ -25,13 +25,13 @@ const HomePage = async () => {
                 already establishes brand identity). */}
             <h1 className="sr-only">Home</h1>
 
-            <div className="flex flex-col gap-y-12 pb-10">
+            <div className="flex flex-col gap-y-12 pb-10 lg:gap-y-16">
                 {/* Billboard renders its own internal padding/margins
                     (unchanged from before) so it stays flush with how the
                     category page's billboard already renders. */}
                 {billboard && <Billboard data={billboard} priority aspectClassName="aspect-[4/5] sm:aspect-[16/9] md:aspect-[2.4/1]" />}
 
-                <div className="flex flex-col gap-y-12 px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col gap-y-12 px-4 sm:px-6 lg:gap-y-16 lg:px-8">
                     {topLevelCategories.length > 0 && (
                         <section aria-labelledby="shop-by-category-heading" className="space-y-4">
                             <h2

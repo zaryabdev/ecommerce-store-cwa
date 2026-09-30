@@ -10,9 +10,9 @@ const Loading = () => {
         aria-live="polite"
       >
         <span className="sr-only">Loading…</span>
-        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12">
+        <div className="md:grid md:grid-cols-2 md:items-start md:gap-x-8 lg:gap-x-12">
           <Skeleton className="aspect-square w-full rounded-xl" />
-          <div className="mt-8 flex flex-col gap-y-4 lg:mt-0">
+          <div className="mt-8 flex flex-col gap-y-4 md:mt-0">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-8 w-3/4" />
             <Skeleton className="h-6 w-32" />

@@ -114,7 +114,11 @@ export default function CODDetailsForm({
 
     return (
         <form onSubmit={handleSubmit} className="lg:grid lg:grid-cols-12 lg:gap-x-8">
-            <div className="space-y-8 lg:col-span-7">
+            {/* `max-w-xl` prevents a lone full-width input from stretching
+                edge-to-edge on tablet, before the `lg` two-column split
+                (which naturally constrains this column's width) engages.
+                Released at `lg` since the grid column already bounds it. */}
+            <div className="max-w-xl space-y-8 lg:max-w-none lg:col-span-7">
                 {/* Customer */}
                 <div>
                     <h2 className="text-subheading text-foreground">

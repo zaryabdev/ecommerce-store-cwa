@@ -32,12 +32,12 @@ const CartPage = () => {
           <div className="px-4 py-16 sm:px-6 lg:px-8" role="status" aria-live="polite">
             <span className="sr-only">Loading…</span>
             <Skeleton className="h-9 w-48" />
-            <div className="mt-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12">
-              <div className="space-y-6 lg:col-span-7">
+            <div className="mt-12 md:grid md:grid-cols-12 md:items-start md:gap-x-8 lg:gap-x-12">
+              <div className="space-y-6 md:col-span-7">
                 <Skeleton className="h-32 w-full rounded-xl" />
                 <Skeleton className="h-32 w-full rounded-xl" />
               </div>
-              <div className="mt-10 lg:col-span-5 lg:mt-0">
+              <div className="mt-10 md:col-span-5 md:mt-0">
                 <Skeleton className="h-48 w-full rounded-xl" />
               </div>
             </div>
@@ -64,7 +64,7 @@ const CartPage = () => {
           )}
 
           {cart.items.length === 0 ? (
-            <div className="mt-12 flex flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-20 text-center">
+            <div className="mx-auto mt-12 flex max-w-xl flex-col items-center justify-center gap-3 rounded-surface border border-border bg-surface-muted px-6 py-20 text-center">
               <p className="text-subheading text-foreground">Your cart is empty</p>
               <p className="text-body text-muted-foreground">
                 Looks like you haven&apos;t added anything yet.
@@ -77,13 +77,18 @@ const CartPage = () => {
               </Link>
             </div>
           ) : (
-            <div className="mt-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12">
-              <ul className="lg:col-span-7">
+            <div className="mt-12 md:grid md:grid-cols-12 md:items-start md:gap-x-8 lg:gap-x-12">
+              {/* Split lowered to `md` (768px) — cart-item rows (image +
+                  name + qty controls) already render comfortably at
+                  narrower mobile widths than a `md` column gets, so there's
+                  no reason to keep this stacked through the whole tablet
+                  range. */}
+              <ul className="md:col-span-7">
                 {cart.items.map((item) => (
                   <CartItem key={item.product.id} data={item.product} quantity={item.quantity} />
                 ))}
               </ul>
-              <div className="mt-10 lg:sticky lg:top-8 lg:col-span-5 lg:mt-0">
+              <div className="mt-10 md:sticky md:top-8 md:col-span-5 md:mt-0">
                 <Summary />
               </div>
             </div>

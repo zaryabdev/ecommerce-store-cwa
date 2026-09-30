@@ -30,7 +30,7 @@ Architecture constraints that apply to every phase below:
 - [x] Build shared loading/empty/error states reused across routes
 - [ ] Accessibility pass (keyboard nav, focus states, color contrast, screen-reader labeling)
 - [ ] Performance pass (image sizing/lazy-loading, bundle size, Core Web Vitals on mobile)
-- [ ] Adapt the mobile-first system up to tablet/desktop breakpoints after the mobile experience is solid
+- [x] Adapt the mobile-first system up to tablet/desktop breakpoints after the mobile experience is solid
 - [ ] Final first-client Storefront presentation QA pass
 
 _Note: theme-active display and per-Store branding management for Phase 1 are Admin-owned — see Admin `Todo.md`._

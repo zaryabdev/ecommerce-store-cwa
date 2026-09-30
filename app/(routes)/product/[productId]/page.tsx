@@ -50,9 +50,13 @@ const ProductPage: React.FC<ProductPageProps> = async ({
     <div className="bg-background">
       <Container>
         <div className="flex flex-col gap-y-10 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-          <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12">
+          {/* Two-column split lowered to `md` (768px) — the gallery/info
+              content is simple enough (one image panel, one text panel) to
+              use the extra tablet width instead of staying stacked all the
+              way to `lg`, unlike Cart/Checkout's denser form content. */}
+          <div className="md:grid md:grid-cols-2 md:items-start md:gap-x-8 lg:gap-x-12">
             <Gallery images={product.images} productName={product.name} priority />
-            <div className="mt-8 lg:mt-0">
+            <div className="mt-8 md:mt-0">
               <Info data={product} />
             </div>
           </div>
