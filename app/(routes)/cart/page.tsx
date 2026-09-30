@@ -29,7 +29,8 @@ const CartPage = () => {
     return (
       <div className="bg-background">
         <Container>
-          <div className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="px-4 py-16 sm:px-6 lg:px-8" role="status" aria-live="polite">
+            <span className="sr-only">Loading…</span>
             <Skeleton className="h-9 w-48" />
             <div className="mt-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12">
               <div className="space-y-6 lg:col-span-7">

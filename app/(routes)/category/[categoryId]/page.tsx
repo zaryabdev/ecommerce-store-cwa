@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from 'next/navigation';
 
 import Container from '@/components/ui/container';
 import Billboard from '@/components/ui/billboard';
@@ -41,6 +42,14 @@ const CategoryPage: React.FC<CategoryPageProps> = async ({
   const colors = await getColors();
   const category = await getCategory(params.categoryId);
   const categories = await getCategories();
+
+  // Admin returns HTTP 200 with a `null` body for an unknown category id
+  // (same contract as getProduct — see product/[productId]/page.tsx).
+  // Previously unguarded: an invalid categoryId threw a TypeError on
+  // `category.name` below with no error boundary to catch it.
+  if (!category) {
+    notFound();
+  }
 
   // Two-level hierarchy: a top-level category shows its own children,
   // a child category shows its parent's family (itself and its siblings).

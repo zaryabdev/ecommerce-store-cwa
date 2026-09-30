@@ -72,10 +72,10 @@ Correction (verified against source): the home page no longer calls `getBillboar
 Do not silently repair during unrelated tasks:
 
 - split API URL env vars
-- missing `res.ok` checks in most fetch helpers
-- no `error.tsx` boundaries
 - generic SEO metadata
 - stale/dead tutorial code and assets
+
+Resolved by Task 9 (Shared States + Hardening): all `actions/*.tsx` fetch helpers now check `res.ok` and throw; `app/error.tsx`, `app/global-error.tsx` and `app/not-found.tsx` now exist; `getProduct`/`getCategory` return `T | null` and call `notFound()` on a genuine miss (Admin returns HTTP 200 + `null` body for an unknown id, verified against source — not a 404 status).
 
 ## Validation
 

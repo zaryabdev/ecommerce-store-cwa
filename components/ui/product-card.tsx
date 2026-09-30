@@ -51,13 +51,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ data }) => {
                 className="flex flex-col gap-3 rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
                 <div className="relative aspect-square overflow-hidden rounded-control bg-surface-muted">
-                    <Image
-                        src={data.images?.[0]?.url}
-                        alt={data.name}
-                        fill
-                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                        className="object-cover"
-                    />
+                    {data.images?.[0]?.url && (
+                        <Image
+                            src={data.images[0].url}
+                            alt={data.name}
+                            fill
+                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                            className="object-cover"
+                        />
+                    )}
                     {!inStock && (
                         <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-foreground/80 px-2 py-1 text-meta font-medium text-primary-foreground">
                             Out of stock

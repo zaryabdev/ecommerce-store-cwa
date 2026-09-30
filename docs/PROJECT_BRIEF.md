@@ -262,7 +262,7 @@ No secret/server-only environment variables exist in this repo — every variabl
 
 - `next/image` is used everywhere product/billboard/gallery/logo images render (`fill` + relatively positioned wrapper is the consistent pattern), for automatic optimization/lazy-loading.
 - Remote image hosts allowed via `next.config.js`: `tailwindui.com` (dead — tutorial placeholder only) and `res.cloudinary.com` (live — Admin-hosted product/billboard/logo images).
-- Billboard images are the one exception: rendered as a plain CSS `background-image` in `ui/billboard.tsx`, not via `next/image` (no lazy-loading/optimization for that image, and no `next.config.js` domain restriction applies to it since it's not routed through `next/image`).
+- ~~Billboard images are the one exception: rendered as a plain CSS `background-image`~~ — stale as of the Task 4 homepage redesign; `ui/billboard.tsx` now uses `next/image` with `fill` like every other image in the app (confirmed directly against current source during the Task 9 audit).
 - Local static images in `public/` (`bag.png`, `coat.png`, `scarf.png`, `image.png`, `user.png`, `billboard-bg*.png`, `bg.svg`, `next.svg`, `vercel.svg`) are **entirely unused leftovers** from the original tutorial/CRA scaffold — see Technical Debt.
 
 # Caching / Revalidation
@@ -275,11 +275,15 @@ No secret/server-only environment variables exist in this repo — every variabl
 
 # Error & Loading Handling
 
-- **Loading UI**: `loading.tsx` files exist for the root route group, category page, and product page, each rendering `Skeleton` placeholders matching that page's approximate layout (Next.js App Router's automatic Suspense boundary per route segment).
-- **No `error.tsx` boundary files exist anywhere** — an unhandled server-side fetch failure (e.g. Admin API down, non-JSON error response) will surface as Next.js's default unstyled error page, not a branded error UI.
-- Server actions (`actions/*.tsx`) mostly call `res.json()` unconditionally without checking `res.ok` — only `get-store.tsx` checks `res.ok` and throws a descriptive error; every other action will silently attempt to parse an error page/body as JSON and either throw a JSON-parse error or return malformed data to the page.
-- Client-side error handling on the COD path is reasonable (`try/catch` around `axios.post`, toasts a message from `error.response.data` if it's a string, modal stays open to retry).
-- `get-store.tsx` contains leftover debug `console.log` statements logging the constructed URL — should be considered noise/cleanup candidate, not a functional issue.
+**Updated by Task 9 (Shared States + Hardening) — most of this section's original findings below are now resolved; kept for historical context of what this discovery doc originally found.**
+
+- **Loading UI**: `loading.tsx` files exist for the root route group, category page, and product page, each rendering `Skeleton` placeholders matching that page's approximate layout (Next.js App Router's automatic Suspense boundary per route segment), plus an `role="status" aria-live="polite"` wrapper (Task 9) so a screen reader announces the loading state instead of silence. The three client-only routes (`/cart`, `/checkout`, `/order-confirmation`) use a manual `isMounted` hydration-gate skeleton instead, with the same `role="status"` wrapper.
+- ~~No `error.tsx` boundary files exist anywhere~~ — resolved: `app/error.tsx` (route-level, catches Server Component fetch failures on `/`, `/category/[categoryId]`, `/product/[productId]`, Navbar/Footer stay visible) and `app/global-error.tsx` (root-layout-level, replaces the whole document — needed because `Navbar` fetches `getCategories()`/`getStore()` above any other boundary) both now exist.
+- ~~Server actions mostly call `res.json()` unconditionally without checking `res.ok`~~ — resolved: all 9 `actions/*.tsx` helpers now check `res.ok` and throw a normalized `Error`, matching the pattern `get-store.tsx`/`get-homepage-billboard.tsx` already used.
+- `getProduct`/`getCategory` return `T | null`; the Product/Category pages call `notFound()` (rendering `app/not-found.tsx`) when Admin's response body is genuinely `null` — verified directly against Admin source (`GET /products/{id}`, `GET /categories/{id}`) that a missing id returns HTTP 200 with a `null` body, not a 404 status, so this mapping is safe.
+- **Known limitation:** on Next.js 13.4.4, `notFound()` from these dynamic Server Component routes renders the correct `not-found.tsx` content but the HTTP response status observed via `next start` is 200, not 404 — a documented upstream Next.js 13.4.x behavior, not an application bug. Upgrading Next was out of scope for this task (standing "avoid dependency upgrades" instruction).
+- Client-side error handling on the COD path: `try/catch` around `axios.post`. Task 9 extended this to also parse Admin's structured `{ error, message, items }` rejection body (used specifically for the `ORDER_NOT_PLACEABLE` stock-mismatch case — verified against `ecommerce-admin-cwa/app/api/[storeId]/cod/route.ts`), which the previous version silently discarded in favor of a generic message. The toast remains, plus a new persistent inline `role="alert"` banner naming the affected cart line(s), since a toast alone isn't reliably seen/announced.
+- `get-store.tsx` still contains leftover debug `console.log` statements — left unchanged (out of scope for Task 9, not touched by this hardening pass).
 
 # SEO / Metadata
 
@@ -345,8 +349,7 @@ There is no `typecheck` script; `tsc --noEmit` would need to be run manually (`t
 
 **Confirmed issues (observed directly in code):**
 - **Two different Admin-API base env vars** (`NEXT_PUBLIC_API_URL` or store-scoped calls vs. `NEXT_PUBLIC_API_BASE_URL` for `get-store.tsx`) — easy to misconfigure; if only one is set, either every catalog fetch breaks or the navbar's store branding silently falls back to defaults.
-- **No `res.ok` checks** in `get-billboard`, `get-categories`, `get-category`, `get-colors`, `get-sizes`, `get-product`, `get-products` — Admin API errors surface as confusing JSON-parse exceptions or malformed data instead of clear errors.
-- **No `error.tsx` boundaries anywhere** — any of the above failures produce Next's default error page, not a branded fallback.
+- ~~No `res.ok` checks~~ / ~~No `error.tsx` boundaries anywhere~~ — **resolved by Task 9**, see "Error & Loading Handling" above.
 - **Dead code**: `constants.ts` (entirely unused Tailwind-UI demo placeholder data), `app/(routes)/cart/components/cart-item-info.tsx` (unused alternate cart-line component), unused dependencies `date-fns`, `react-spinners`, `@tailwindcss/aspect-ratio`, and unused static assets in `public/` (`bag.png`, `coat.png`, `scarf.png`, `image.png`, `user.png`, `billboard-bg*.png`, `bg.svg`, `next.svg`, `vercel.svg`).
 - **Debug `console.log` statements** left in `actions/get-store.tsx`.
 - **Stale README**: still describes the Admin tutorial's full feature set (Clerk, multi-vendor, Stripe webhooks) as if it were this repo's own README; its `.env` example has a duplicated `NEXT_PUBLIC_WHATSAPP_NUMBER` line and is missing `NEXT_PUBLIC_API_BASE_URL`.

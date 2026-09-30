@@ -4,7 +4,8 @@ import Skeleton from "@/components/ui/skeleton";
 const Loading = () => {
   return (
     <Container>
-      <div className="flex flex-col gap-y-12 pb-10">
+      <div className="flex flex-col gap-y-12 pb-10" role="status" aria-live="polite">
+        <span className="sr-only">Loading…</span>
         <div className="p-4 sm:p-6 lg:p-8">
           <Skeleton className="w-full aspect-[4/5] rounded-xl sm:aspect-[16/9] md:aspect-[2.4/1]" />
         </div>

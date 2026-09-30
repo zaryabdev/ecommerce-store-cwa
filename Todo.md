@@ -27,7 +27,7 @@ Architecture constraints that apply to every phase below:
 - [x] Redesign product-detail experience (gallery, info panel, add-to-cart with stock-aware quantity controls)
 - [x] Redesign cart experience (line items, quantity controls, stock clamping feedback, totals)
 - [x] Redesign COD checkout experience (customer/shipping form, order submission, `OrderSuccessCard`)
-- [ ] Build shared loading/empty/error states reused across routes
+- [x] Build shared loading/empty/error states reused across routes
 - [ ] Accessibility pass (keyboard nav, focus states, color contrast, screen-reader labeling)
 - [ ] Performance pass (image sizing/lazy-loading, bundle size, Core Web Vitals on mobile)
 - [ ] Adapt the mobile-first system up to tablet/desktop breakpoints after the mobile experience is solid

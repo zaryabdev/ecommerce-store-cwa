@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import ProductList from '@/components/product-list'
 import Gallery from '@/components/gallery';
 import Info from '@/components/info';
@@ -23,8 +25,14 @@ const ProductPage: React.FC<ProductPageProps> = async ({
  }) => {
   const product = await getProduct(params.productId);
 
+  // Admin returns HTTP 200 with a `null` body for an unknown product id
+  // (verified against the Admin route directly — Prisma `findUnique`
+  // passed straight to `NextResponse.json`, no 404 status). A genuine
+  // fetch failure instead throws inside getProduct and is caught by
+  // this route's error.tsx, so reaching here with a falsy product means
+  // the product truly doesn't exist.
   if (!product) {
-    return null;
+    notFound();
   }
 
   const suggestedProducts = await getProducts({

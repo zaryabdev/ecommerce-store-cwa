@@ -122,11 +122,11 @@ Correction (verified against source): the home page no longer calls `getBillboar
 Do not silently fix these during unrelated work:
 
 - split API base environment variables
-- most read helpers do not check `res.ok`
-- no route `error.tsx` boundaries
 - no runtime validation of Admin API responses
 - generic metadata only
 - dead tutorial assets/dependencies/debug logs remain
+
+Resolved by Task 9 (Shared States + Hardening): all 9 `actions/*.tsx` fetch helpers now check `res.ok` and throw a normalized `Error` on failure (previously 7 of 9 silently mis-returned or crashed on JSON parse); `app/error.tsx`, `app/global-error.tsx` (root-layout-level, since `Navbar` fetches above any other boundary) and `app/not-found.tsx` now exist. `getProduct`/`getCategory` return `T | null` and the Product Detail / Category pages call `notFound()` on a genuine miss — verified directly against Admin's `GET /products/{id}` and `GET /categories/{id}` routes, both of which return HTTP 200 with a `null` body for an unknown id (not a 404 status), so this is a safe, source-confirmed mapping, not an inference.
 
 ## UI / Data Change Discipline
 

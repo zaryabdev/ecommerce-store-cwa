@@ -27,6 +27,11 @@ const getProducts = async (query: Query): Promise<Product[]> => {
 
   const res = await fetch(url);
 
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`getProducts failed (${res.status}): ${text.slice(0, 120)}`);
+  }
+
   return res.json();
 };
 

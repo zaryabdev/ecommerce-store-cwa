@@ -34,13 +34,15 @@ const CartItem: React.FC<CartItemProps> = ({ data, quantity }) => {
                 href={`/product/${data.id}`}
                 className="relative h-24 w-24 shrink-0 overflow-hidden rounded-control bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:h-32 sm:w-32"
             >
-                <Image
-                    fill
-                    src={data?.images[0]?.url || ""}
-                    alt={data.name}
-                    sizes="(min-width: 640px) 128px, 96px"
-                    className="object-cover object-center"
-                />
+                {data.images?.[0]?.url && (
+                    <Image
+                        fill
+                        src={data.images[0].url}
+                        alt={data.name}
+                        sizes="(min-width: 640px) 128px, 96px"
+                        className="object-cover object-center"
+                    />
+                )}
             </Link>
 
             <div className="flex flex-1 flex-col gap-3">
