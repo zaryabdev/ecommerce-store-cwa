@@ -75,7 +75,7 @@ const CheckoutPage = () => {
                 router.replace("/order-confirmation");
             } catch (error: any) {
                 // Admin's /cod route returns two distinct error shapes
-                // (verified against ecommerce-admin-cwa/app/api/[storeId]/cod/route.ts):
+                // (verified against storvia-admin/app/api/[storeId]/cod/route.ts):
                 // a bare string for generic/validation failures, and a JSON
                 // body `{ error, message, items }` specifically for a stock
                 // mismatch (`ORDER_NOT_PLACEABLE`) — `items` lists each
