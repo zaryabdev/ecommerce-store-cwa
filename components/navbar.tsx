@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 import getCategories from "@/actions/get-categories";
 import getStore from "@/actions/get-store";
@@ -46,7 +47,14 @@ const Navbar = async () => {
                         <MainNav data={categories} />
                     </div>
 
-                    <div className="ml-auto flex items-center">
+                    <div className="ml-auto flex items-center gap-x-2">
+                        <Link
+                            href="/search"
+                            aria-label="Search"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-sm transition hover:scale-110 hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                        >
+                            <Search size={20} aria-hidden="true" />
+                        </Link>
                         <NavbarActions />
                     </div>
                 </div>
